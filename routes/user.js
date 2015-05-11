@@ -7,85 +7,137 @@ var logger = require('../logger');
 
 router.get('/img/:IMG_NAME', function (req, res) {
     var imgName = req.params.IMG_NAME;
-    var img = fs.readFileSync('./public/images/profile/'+imgName+'.png');
-    res.writeHead(200, {'Content-Type': 'image/png'});
+    var img = fs.readFileSync('./public/images/profile/'+imgName);
+    res.writeHead(200, {'Content-Type': 'image/jpg'});
     res.end(img, 'binary');
 });
 
 //일반 회원 가입
 router.post('/join', function(req, res, next) {
     logger.info('req.body', req.body);
+
     var id = req.body.id;
     var passwd = req.body.passwd;
     var nickname = req.body.nickname;
     var gender = req.body.gender;
     var datas = [nickname, id, passwd, gender];
 
-    if(!id){
-        res.json({"Result":"fail", "ResultMsg":"idNull"});
-    }else if(!passwd){
-        res.json({"Result":"fail", "ResultMsg":"passwdNull"});
-    }else if(!nickname) {
-        res.json({"Result": "fail", "ResultMsg": "nickNull"});
-    }else if(!gender){
-        res.json({"Result":"fail", "ResultMsg":"genderNull"});
-    }else {
-        db_user.join(datas, function (flag, success) {
-            if (success) {
-                logger.info('회원가입 성공');
-                res.json({"Result": "ok"});
-            } else {
-                //flag=0
-                if(flag==0) {
-                    logger.info('회원가입 실패(아이디 중복)');
-                    res.json({"Result": "idDuplicated"});
-                }else if(flag==1){
-                    logger.info('회원가입 실패(닉네임 중복)');
-                    res.json({"Result": "nickDuplicated"});
-                }else{
-                    logger.info('회원가입 실패(커넥션 에러)');
-                    res.json({"Result": "connError"});
-                }
+    async.waterfall([
+        function(callback){
+            if(!id){
+                logger.error('/user/join idNull');
+                callback(null, 0);
+            }else if(!passwd){
+                logger.error('/user/join passwdNull');
+                callback(null, 1);
+            }else if(!nickname){
+                logger.error('/user/join nickNull');
+                callback(null, 2);
+            }else if(!gender){
+                logger.error('/user/join passwdNull');
+                callback(null, 3);
+            }else{
+                callback(null, 4);
             }
-        });
-    }
+        },function(errNum, callback){
+            if(errNum==0) {
+                callback(null, "idNull");
+            }else if(errNum==1){
+                callback(null, "passwdNull");
+            }else if(errNum==2){
+                callback(null, "nickNull");
+            }else if(errNum==3){
+                callback(null, "genderNull");
+            }else if(errNum==4){
+                db_user.join(datas, function (flag, success) {
+                    if (success) {
+                        callback(null, "ok");
+                    } else {
+                        //flag=0
+                        if(flag==0) {
+                            logger.error('회원가입 실패(아이디 중복)');
+                            callback(null, "idDuplicated");
+                        }else if(flag==1){
+                            logger.error('회원가입 실패(닉네임 중복)');
+                            callback(null, "nickDuplicated");
+                        }else if(flag==2){
+                            logger.error('회원가입 실패(커넥션 에러)');
+                            callback(null, "connError");
+                        }else if(flag==3){
+                            logger.error('회원가입 실패(커넥션 쿼리 에러)');
+                            callback(null, "connQueryError");
+                        }
+                    }
+                });
+            }
+        }
+    ],function(err, Msg){
+        if(Msg=="ok"){
+            logger.info('회원가입 성공');
+            res.json({"Result": "ok"});
+        }else{
+            res.json({"Result": Msg});
+        }
+    });
 });
 
 //페이스북 회원가입
 router.post('/fbjoin', function(req, res, next) {
     logger.info('req.body', req.body);
+
     var nickname = req.body.nickname;
     var access_token = req.body.accessToken;
     var datas = [nickname, access_token];
 
-    if(!access_token){
-        res.json({"Result":"fail", "ResultMsg":"accesstokenNull"});
-    }else if(!nickname){
-        res.json({"Result":"fail", "ResultMsg":"nicknameNull"});
-    }else {
-        db_user.fbjoin(datas, function (flag, success) {
-            if (success) {
-                res.json({"Result": "ok"});
-            } else {
-                if(flag==0){
-                    logger.info('잘못된 엑세스 토큰');
-                    res.json({"Result": "wrongAccessToken"});
-                }else if(flag==1) {
-                    logger.info('pool.getConnection Error');
-                    res.json({"Result": "getConnectionError"});
-                }else if(flag==2){
-                    logger.info('facebook id 중복');
-                    res.json({"Result": "fbIdDuplicated"});
-                }else if(flag==3){
-                    logger.info('nickname 중복');
-                    res.json({"Result": "nickDuplicated"});
-                }else{
-                    logger.info('conn.query Error');
-                    res.json({"Result": "conn.queryError"});
-                }
+    async.waterfall([
+        function(callback){
+            if(!access_token){
+                logger.error('/user/fbjoin accessTokenNull');
+                callback(null, 0);
+            }else if(!nickname){
+                logger.error('/user/fbjoin nicknameNull');
+                callback(null, 1);
+            }else{
+                callback(null, 2);
             }
-        });
-    }
+        }, function(errNum, callback){
+            if(errNum==0){
+                callback(null, "accessTokenNull");
+            }else if(errNum==1){
+                callback(null, "nicknameNull");
+            }else if(errNum==2){
+                db_user.fbjoin(datas, function (flag, success) {
+                    if (success) {
+                        res.json({"Result": "ok"});
+                    } else {
+                        if(flag==0){
+                            logger.error('잘못된 엑세스 토큰');
+                            callback(null, "wrongAccessToken");
+                        }else if(flag==1) {
+                            logger.error('pool.getConnection Error');
+                            callback(null, "getConnectionError");
+                        }else if(flag==2){
+                            logger.error('facebook id 중복');
+                            callback(null, "fbIdDuplicated");
+                        }else if(flag==3){
+                            logger.error('nickname 중복');
+                            callback(null, "nickDuplicated");
+                        }else{
+                            logger.error('conn.query Error');
+                            callback(null, "conn.queryError");
+                        }
+                    }
+                });
+            }
+        }
+    ], function(err, Msg){
+        if(Msg=="ok"){
+            logger.info('페이스북 회원가입 성공');
+            res.json({"Result": "ok"});
+        }else{
+            res.json({"Result": Msg});
+        }
+    });
 });
 
 router.post('/login', function(req, res, next) {

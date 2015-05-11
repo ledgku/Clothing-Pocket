@@ -28,7 +28,6 @@ router.use(multer({
 }));
 
 router.post('/add', function (req, res, next) {
-
     logger.info('req.body', req.body);
     logger.info('req.files', req.files);
 
@@ -125,11 +124,64 @@ router.post('/download', function (req, res, next) {
 });
 
 router.post('/delete', function (req, res, next) {
-    res.json({"success": "ok"});
+    logger.info('req.body ', req.body);
+
+    var item_num = req.body.itemNum;
+
+    if(!item_num){
+        logger.error('/item/delete itemNumNull');
+        res.json({"Result":"itemNumNull"});
+    }else{
+        db_item.delete(item_num, function(flag, success){
+            if(success){
+                res.json({"Result": "ok"});
+            }else{
+                if(flag==0){
+                    logger.error('db_item.delete pool.getConnection Error');
+                    res.json({"Result": "getConnectionError"});
+                }else if (flag == 1) {
+                    logger.error('db_item.delete rollback error');
+                    res.json({"Result": "rollbackError"});
+                }else if (flag ==2) {
+                    logger.error('db_item.delete rollback');
+                    res.json({"Result": "rollback"});
+                }
+            }
+        })
+    }
 });
 
 router.post('/good', function (req, res, next) {
-    res.json({"success": "ok"});
+    logger.info('req.body ', req.body);
+
+    var item_num = req.body.itemNum;
+    var nickname = req.body.nickname;
+    var datas = [item_num, nickname];
+
+    if(!item_num){
+        logger.error('/item/good itemNumNull');
+        res.json({"Result":"itemNumNull"});
+    }else if(!nickname){
+        logger.error('/item/good nicknameNull');
+        res.json({"Result":"nicknameNull"});
+    }else{
+        db_item.good(datas, function(flag, success){
+            if(success){
+                res.json({"Result": "ok"});
+            }else{
+                if(flag==0){
+                    logger.error('db_item.good pool.getConnection Error');
+                    res.json({"Result": "getConnectionError"});
+                }else if(flag==1){
+                    logger.error('db_item.good conn.query Error');
+                    res.json({"Result": "connQueryError"});
+                }else if(flag==2){
+                    logger.error('db_item.good Fail');
+                    res.json({"Result": "Fail"});
+                }
+            }
+        });
+    }
 });
 
 router.post('/detail', function (req, res, next) {
@@ -141,7 +193,17 @@ router.post('/detail', function (req, res, next) {
         res.json({"result": 'itemNumNull'});
     } else {
         db_item.detail(item_num, function (flag, success) {
-
+            if (success) {
+                res.json({"Result": "ok"});
+            } else {
+                if (flag == 0) {
+                    logger.error('db_item.detail pool.getConnection Error');
+                    res.json({"Result": "getConnectionError"});
+                } else if (flag == 1) {
+                    logger.error('db_item.detail conn.query Error');
+                    res.json({"Result": "connQueryError"});
+                }
+            }
         });
     }
 });

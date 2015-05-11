@@ -9,10 +9,7 @@ var logger = require('../logger');
 //일반 회원 가입, USER_JOINPATH(0)
 exports.join = function (datas, done) {
     pool.getConnection(function (err, conn) {
-        if (err) {
-            logger.error('getConnection error', err);
-            done(2, false);
-        }
+        if (err) done(2, false);
 
         var nickname = datas[0];
         var id = datas[1];
@@ -21,9 +18,8 @@ exports.join = function (datas, done) {
         //닉네임 중복 체크
         conn.query(sql, nickname, function (err, row) {
             if (err) {
-                logger.error('nickname check conn.query error ', err);
                 conn.release();
-                done(2, false);
+                done(3, false);
             }
             logger.info(row);
             if (row[0].cnt != 0) {
@@ -34,7 +30,6 @@ exports.join = function (datas, done) {
                 var sql = "select count(*) cnt from user where USER_ID=?";
                 conn.query(sql, id, function (err, row) {
                     if (err) {
-                        logger.error('id check conn.query error', err);
                         conn.release();
                         done(2, false);
                     }
@@ -46,7 +41,10 @@ exports.join = function (datas, done) {
                         //회원 가입
                         var sql = "insert into user(USER_NICKNAME, USER_JOINPATH, USER_ID, USER_PASSWORD, USER_JOINDATE, USER_LASTLOGIN, USER_GENDER) values(?,0,?,?,now(),now(),?)";
                         conn.query(sql, datas, function (err, row) {
-                            if (err) logger.error('join conn.query error', err);
+                            if (err){
+                                conn.release();
+                                done(3, false);
+                            }
                             logger.info('row', row);
                             var success = false;
                             if (row.affectedRows == 1) {
@@ -81,7 +79,8 @@ exports.fbjoin = function (datas, done) {
         if (res.gender != 'male') {
             gender = 1;
         }
-        var datas = [nickname, join_path, res.id, gender];
+        var id = res.id;
+        var datas = [nickname, join_path, id, gender];
         logger.info('fbjoin datas ', datas);
         pool.getConnection(function (err, conn) {
             if (err) {
@@ -135,53 +134,3 @@ exports.fbjoin = function (datas, done) {
         });
     });
 }
-/*
-
- // 닉네임 중복 검사
- function checkNick(data, callback) {
- var userNickname = data;
- pool.getConnection(function(err, conn) {
- if (err) {
- console.log('checkNick getConnection Error : ', err);
- }
- var sql = 'select USER_NICKNAME FROM user';
- conn.query(sql, [], function(err, rows) {
- if (err) {
- console.log('USER_NICKNAME SELECT Query Error : ', err);
- }
- console.log('Nickname List : ', rows);
- var item = rows.filter(function(item) {
- return (item.user_nickname == userNickname);
- });
- console.log('item : ', item);
- conn.release();
- callback(item.length);
- });
- });
- }
-
- // 아이디 중복 검사
- function checkId(data, callback) {
- var userId = data;
- pool.getConnection(function(err, conn) {
- if (err) {
- console.log('checkId getConnection Error : ', err);
- }
- var sql = 'select USER_ID FROM user';
- conn.query(sql, [], function(err, rows) {
- if (err) {
- console.log('USER_ID SELECT Query Error : ', err);
- }
- console.log('ID List : ', rows);
- var item = rows.filter(function(item) {
- return (item.USER_ID == userId);
- });
- console.log('item : ', item);
- conn.release();
- callback(item.length);
- });
- });
- }
-
- function regist()
- */

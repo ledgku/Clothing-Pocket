@@ -25,7 +25,7 @@ router.post('/add', function (req, res, next) {
     logger.info('req.files', req.files);
 
     var item = req.files;
-    var filename = req.files.item.name;
+    var filename = req.files.file.name;
     var filePath = 'http://localhost/coordi/img/'+filename;
     var nickname = req.body.nickname;
     var datas = [nickname, filePath];
@@ -36,7 +36,6 @@ router.post('/add', function (req, res, next) {
         res.json({"result": 'coordiUploadFileNull'});
     }else{
         logger.info('coordiUploadOK');
-        res.json({"result": 'UploadOK'});
         db_coordi.add(datas, function(flag, success){
             if(success){
                 res.json({"Result":"ok"});
@@ -54,7 +53,31 @@ router.post('/add', function (req, res, next) {
 });
 
 router.post('/delete', function (req, res, next) {
-    res.json({"result": "success"});
+    logger.info('req.body ', req.body);
+
+    var coordi_num = req.body.coordiNum;
+
+    if(!coordi_num){
+        logger.error('/coordi/delete coordiNumNull');
+        res.json({"Result":"coordiNumNull"});
+    }else{
+        db_coordi.delete(coordi_num, function(flag, success){
+            if(success){
+                res.json({"Result": "ok"});
+            }else{
+                if(flag==0){
+                    logger.error('db_coordi.delete pool.getConnection Error');
+                    res.json({"Result": "getConnectionError"});
+                }else if (flag == 1) {
+                    logger.error('db_coordi.delete rollback error');
+                    res.json({"Result": "rollbackError"});
+                }else if (flag ==2) {
+                    logger.error('db_coordi.delete rollback');
+                    res.json({"Result": "rollback"});
+                }
+            }
+        })
+    }
 });
 
 router.post('/modify', function (req, res, next) {
@@ -114,7 +137,36 @@ router.post('/modify', function (req, res, next) {
 });
 
 router.post('/good', function (req, res, next) {
-    res.json({"result": "success"});
+    logger.info('req.body ', req.body);
+
+    var coordi_num = req.body.coordiNum;
+    var nickname = req.body.nickname;
+    var datas = [coordi_num, nickname];
+
+    if(!coordi_num){
+        logger.error('/coordi/good coordiNumNull');
+        res.json({"Result":"coordiNumNull"});
+    }else if(!nickname){
+        logger.error('/item/good nicknameNull');
+        res.json({"Result":"nicknameNull"});
+    }else{
+        db_coordi.good(datas, function(flag, success){
+            if(success){
+                res.json({"Result": "ok"});
+            }else{
+                if(flag==0){
+                    logger.error('db_coordi.good pool.getConnection Error');
+                    res.json({"Result": "getConnectionError"});
+                }else if(flag==1){
+                    logger.error('db_coordi.good conn.query Error');
+                    res.json({"Result": "connQueryError"});
+                }else if(flag==2){
+                    logger.error('db_coordi.good Fail');
+                    res.json({"Result": "Fail"});
+                }
+            }
+        });
+    }
 });
 
 router.post('/detail', function (req, res, next) {
