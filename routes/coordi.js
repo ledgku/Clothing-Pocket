@@ -4,6 +4,7 @@ var fs = require('fs');
 var path = require('path');
 var logger = require('../logger');
 var multer = require('multer');
+var merge = require('merge');
 var db_coordi = require('../models/db_coordi.js');
 
 router.get('/img/:IMG_NAME', function (req, res) {
@@ -176,85 +177,26 @@ router.post('/good', function (req, res, next) {
 });
 
 router.post('/detail', function (req, res, next) {
-    res.json(
-        {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, [{
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "date": "2015-05-03 11:21:54",
-            "content": "예뻐요."
-        }, {
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "date": "2015-05-03 11:21:54",
-            "content": "예뻐요."
-        }, {
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "date": "2015-05-03 11:21:54",
-            "content": "예뻐요."
-        }, {
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "date": "2015-05-03 11:21:54",
-            "content": "예뻐요."
-        }, {
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "date": "2015-05-03 11:21:54",
-            "content": "예뻐요."
-        }, {
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "date": "2015-05-03 11:21:54",
-            "content": "예뻐요."
-        }, {
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "date": "2015-05-03 11:21:54",
-            "content": "예뻐요."
-        }],
-        [{
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }],
-        [{
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }
+    logger.info('req.body', req.body);
+    var coordi_num = req.body.coordiNum;
 
-        ]);
+    if (!coordi_num) {
+        logger.info('coordiNumNull');
+        res.json({"result": 'coordiNumNull'});
+    } else {
+        db_coordi.detail(coordi_num, function (success, results) {
+            if (success) {
+                logger.info("/coordi/detail success");
+                logger.info('results', results);
+                var datas = results[0].concat(results[1]);
+                var data = merge(datas[0], datas[1]);
+                res.json({"Info": data, "CoordiProp":results[2], "CoordiItems":results[3], "CoordiList":results[4]});
+            } else {
+                logger.error('/coordi/detail fail');
+                res.json({"Result": "Fail"});
+            }
+        });
+    }
 });
 
 router.post('/reply/reg', function (req, res, next) {

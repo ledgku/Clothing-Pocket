@@ -314,3 +314,74 @@ exports.good = function (datas, done) {
        }
     });
 }
+
+exports.detail = function (data, done) {
+    logger.info('data ', data);
+
+    var item_num = data;
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(0, false);
+        } else {
+            async.series([
+                function (callback) {
+                    var sql = "select item.ITEM_URL, item.ITEM_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from item join user on item.USER_NICKNAME = user.USER_NICKNAME and item.ITEM_NUM=?";
+                    conn.query(sql, item_num, function(err, row){
+                       if(err){
+                           logger.error('item detail conn.query error 1/4', err);
+                           callback(err);
+                       }else{
+                           logger.info('item detail success 1/4');
+                           callback(null, row);
+                       }
+                    });
+                }, function (callback){
+                    var sql = "select count(*) cnt from good_item where ITEM_NUM=?";
+                    conn.query(sql, item_num, function(err, row){
+                       if(err){
+                           logger.error('item detail conn.query error 2/4', err);
+                           callback(err);
+                       } else{
+                           logger.info('item detail success 2/4');
+                           callback(null, row);
+                       }
+                    });
+                }, function (callback){
+                    var sql = "select p.ITEM_PROP_CONTENT from item join (select item_prop.ITEM_NUM, item_prop_code.ITEM_PROP_CONTENT from item_prop join item_prop_code on item_prop.ITEM_PROP = item_prop_code.ITEM_PROP) p where item.ITEM_NUM = p.ITEM_NUM and item.ITEM_NUM=?";
+                    conn.query(sql, item_num, function(err, row){
+                        if(err){
+                            logger.error('item detail conn.query error 3/4', err);
+                            callback(err);
+                        } else{
+                            logger.info('item detail success 3/4');
+                            callback(null, row);
+                        }
+                    });
+                }, function (callback){
+                    var sql = "select coordi.CD_NUM, coordi.CD_URL from coordi join (select coordi_item.CD_NUM from item join coordi_item on item.ITEM_NUM = coordi_item.ITEM_NUM and item.ITEM_NUM=?) p where coordi.CD_NUM = p.CD_NUM limit 7";
+                    conn.query(sql, item_num, function(err, row){
+                        if(err){
+                            logger.error('item detail conn.query error 4/4', err);
+                            callback(err);
+                        } else{
+                            logger.info('item detail success 4/4');
+                            callback(null, row);
+                        }
+                    });
+                }
+            ], function (err, results) {
+                if(err){
+                    logger.error("/item/detail error", err);
+                    conn.release();
+                    done(false);
+                }else{
+                    logger.info("/item/detail info");
+                    conn.release();
+                    done(true, results);
+                }
+            });
+        }
+    });
+}

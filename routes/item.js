@@ -4,6 +4,7 @@ var fs = require('fs');
 var path = require('path');
 var logger = require('../logger');
 var multer = require('multer');
+var merge = require('merge');
 var db_item = require('../models/db_item.js');
 
 router.get('/img/download/:IMG_NAME', function (req, res) {
@@ -195,17 +196,16 @@ router.post('/detail', function (req, res, next) {
         logger.info('itemNumNull');
         res.json({"result": 'itemNumNull'});
     } else {
-        db_item.detail(item_num, function (flag, success) {
+        db_item.detail(item_num, function (success, results) {
             if (success) {
-                res.json({"Result": "ok"});
+                logger.info("/item/detail success");
+                logger.info('results', results);
+                var datas = results[0].concat(results[1]);
+                var data = merge(datas[0], datas[1]);
+                res.json({"Info":data, "ItemProp":results[2], "ItemCoordi":results[3]});
             } else {
-                if (flag == 0) {
-                    logger.error('db_item.detail pool.getConnection Error');
-                    res.json({"Result": "getConnectionError"});
-                } else if (flag == 1) {
-                    logger.error('db_item.detail conn.query Error');
-                    res.json({"Result": "connQueryError"});
-                }
+                logger.error('/item/detail fail');
+                res.json({"Result": "Fail"});
             }
         });
     }

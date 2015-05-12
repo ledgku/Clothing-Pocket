@@ -315,3 +315,85 @@ exports.good = function (datas, done) {
         }
     });
 }
+
+exports.detail = function (data, done) {
+    logger.info('data ', data);
+
+    var coordi_num = data;
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(0, false);
+        } else {
+            async.series([
+                function (callback) {
+                    var sql = "select coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
+                    conn.query(sql, coordi_num, function(err, row){
+                        if(err){
+                            logger.error('coordi detail conn.query error 1/5', err);
+                            callback(err);
+                        }else{
+                            logger.info('coordi detail success 1/5');
+                            callback(null, row);
+                        }
+                    });
+                }, function (callback){
+                    var sql = "select count(*) cnt from good_coordi where CD_NUM=?";
+                    conn.query(sql, coordi_num, function(err, row){
+                        if(err){
+                            logger.error('coordi detail conn.query error 2/5', err);
+                            callback(err);
+                        } else{
+                            logger.info('coordi detail success 2/5');
+                            callback(null, row);
+                        }
+                    });
+                }, function (callback){
+                    var sql = "select p.COORDI_PROP_CONTENT from coordi join (select coordi_prop.CD_NUM, coordi_prop_code.COORDI_PROP_CONTENT from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP) p where coordi.CD_NUM = p.CD_NUM and coordi.CD_NUM=?";
+                    conn.query(sql, coordi_num, function(err, row){
+                        if(err){
+                            logger.error('coordi detail conn.query error 3/5', err);
+                            callback(err);
+                        } else{
+                            logger.info('coordi detail success 3/5');
+                            callback(null, row);
+                        }
+                    });
+                }, function (callback){
+                    var sql = "select item.ITEM_NUM, item.ITEM_URL from COORDI_ITEM join ITEM on coordi_item.ITEM_NUM = item.ITEM_NUM where coordi_item.CD_NUM=?";
+                    conn.query(sql, coordi_num, function(err, row){
+                        if(err){
+                            logger.error('item detail conn.query error 4/5', err);
+                            callback(err);
+                        } else{
+                            logger.info('item detail success 4/5');
+                            callback(null, row);
+                        }
+                    });
+                }, function (callback){
+                    var sql = "select coordi.CD_NUM, coordi.CD_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME where coordi.USER_NICKNAME=(select coordi.USER_NICKNAME from coordi where coordi.CD_NUM=?) limit 7";
+                    conn.query(sql, coordi_num, function(err, row){
+                        if(err){
+                            logger.error('item detail conn.query error 5/5', err);
+                            callback(err);
+                        } else{
+                            logger.info('item detail success 5/5');
+                            callback(null, row);
+                        }
+                    });
+                }
+            ], function (err, results) {
+                if(err){
+                    logger.error("/coordi/detail error", err);
+                    conn.release();
+                    done(false);
+                }else{
+                    logger.info("/coordi/detail info");
+                    conn.release();
+                    done(true, results);
+                }
+            });
+        }
+    });
+}
