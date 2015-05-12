@@ -145,6 +145,9 @@ router.post('/delete', function (req, res, next) {
                 }else if (flag ==2) {
                     logger.error('db_item.delete rollback');
                     res.json({"Result": "rollback"});
+                }else if (flag == 3){
+                    logger.error('db_item.delete unlink error');
+                    res.json({"Result": "unlinkError"});
                 }
             }
         })

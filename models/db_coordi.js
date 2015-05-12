@@ -5,6 +5,7 @@ var db_config = require('./db_config');
 var pool = mysql.createPool(db_config);
 var logger = require('../logger');
 var async = require('async');
+var fs = require('fs');
 
 //아이템 등록
 //datas = [nickname, coordiPath]
@@ -163,14 +164,25 @@ exports.delete = function (data, done) {
                     function (callback) {
                         if (err) callback(err);
                         else callback(null);
-                    }, function (callback) {
+                    },  function(callback){
+                        var sql = "select CD_URL from coordi where CD_NUM=?";
+                        conn.query(sql, coordi_num, function(err, row){
+                            if(err){
+                                logger.error('CD_URL select error');
+                                callback(err);
+                            }else{
+                                logger.info('CD_URL select success');
+                                callback(null, row[0].CD_URL);
+                            }
+                        });
+                    },function (callback) {
                         var sql = "delete from good_coordi where CD_NUM=?";
                         conn.query(sql, coordi_num, function (err, row) {
                             if (err) {
                                 logger.error('good_coordi delete error');
                                 callback(err);
                             } else {
-                                logger.error('good_coordi delete success');
+                                logger.info('good_coordi delete success');
                                 callback(null);
                             }
                         });
@@ -181,7 +193,7 @@ exports.delete = function (data, done) {
                                 logger.error('coordi_prop delete error');
                                 callback(err);
                             } else {
-                                logger.error('coordi_prop delete success');
+                                logger.info('coordi_prop delete success');
                                 callback(null);
                             }
                         });
@@ -192,7 +204,7 @@ exports.delete = function (data, done) {
                                 logger.error('coordi_item delete error');
                                 callback(err);
                             } else {
-                                logger.error('coordi_item delete success');
+                                logger.info('coordi_item delete success');
                                 callback(null);
                             }
                         });
@@ -203,12 +215,12 @@ exports.delete = function (data, done) {
                                 logger.error('coordi delete error');
                                 callback(err);
                             } else {
-                                logger.error('coordi delete success');
+                                logger.info('coordi delete success');
                                 callback(null);
                             }
                         });
                     }
-                ], function (err) {
+                ], function (err, imgPath) {
                     if (err) {
                         logger.error('delete coordi error.');
                         conn.rollback(function (err) {
@@ -216,7 +228,7 @@ exports.delete = function (data, done) {
                                 logger.error('rollback error');
                                 done(1, false);
                             } else {
-                                logger.error('rollback complete');
+                                logger.info('rollback complete');
                                 done(2, false);
                             }
                         });
@@ -225,9 +237,19 @@ exports.delete = function (data, done) {
                             if (err) {
                                 conn.rollback(function (err) {
                                     logger.error('rollback error');
+                                    conn.release();
                                     done(1, false);
                                 });
                             }else {
+                                var pathArr = imgPath[1].split('/');
+                                var fileName = pathArr[pathArr.length-1];
+                                var filePath = "./public/images/coordi/"+fileName;
+                                logger.info(filePath);
+                                fs.unlink(filePath, function(err){
+                                    logger.error('err', err);
+                                    done(3, false);
+                                });
+                                conn.release();
                                 done(0, true);
                             }
                         });

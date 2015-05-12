@@ -5,6 +5,7 @@ var db_config = require('./db_config');
 var pool = mysql.createPool(db_config);
 var logger = require('../logger');
 var async = require('async');
+var fs = require('fs');
 
 //아이템 등록
 exports.add = function (datas, done) {
@@ -162,14 +163,25 @@ exports.delete = function (data, done) {
                     function (callback) {
                         if (err) callback(err);
                         else callback(null);
-                    }, function (callback) {
+                    }, function(callback){
+                        var sql = "select ITEM_URL from item where ITEM_NUM=?";
+                        conn.query(sql, item_num, function(err, row){
+                           if(err){
+                               logger.error('good_item_url select error');
+                               callback(err);
+                           }else{
+                               logger.info('good_item_url select success');
+                               callback(null, row[0].ITEM_URL);
+                           }
+                        });
+                    },function (callback) {
                         var sql = "delete from good_item where ITEM_NUM=?";
                         conn.query(sql, item_num, function (err, row) {
                             if (err) {
                                 logger.error('good_item delete error');
                                 callback(err);
                             } else {
-                                logger.error('good_item delete success');
+                                logger.info('good_item delete success');
                                 callback(null);
                             }
                         });
@@ -180,7 +192,7 @@ exports.delete = function (data, done) {
                                 logger.error('item_prop delete error');
                                 callback(err);
                             } else {
-                                logger.error('item_prop delete success');
+                                logger.info('item_prop delete success');
                                 callback(null);
                             }
                         });
@@ -191,7 +203,7 @@ exports.delete = function (data, done) {
                                 logger.error('coordi_item delete error');
                                 callback(err);
                             } else {
-                                logger.error('coordi_item delete success');
+                                logger.info('coordi_item delete success');
                                 callback(null);
                             }
                         });
@@ -202,12 +214,12 @@ exports.delete = function (data, done) {
                                 logger.error('item delete error');
                                 callback(err);
                             } else {
-                                logger.error('item delete success');
+                                logger.info('item delete success');
                                 callback(null);
                             }
                         });
                     }
-                ], function (err) {
+                ], function (err, imgPath) {
                     if (err) {
                         logger.error('delete item error.');
                         conn.rollback(function (err) {
@@ -215,7 +227,7 @@ exports.delete = function (data, done) {
                                 logger.error('rollback error');
                                 done(1, false);
                             } else {
-                                logger.error('rollback complete');
+                                logger.info('rollback complete');
                                 done(2, false);
                             }
                         });
@@ -224,9 +236,19 @@ exports.delete = function (data, done) {
                             if (err) {
                                 conn.rollback(function (err) {
                                     logger.error('rollback error');
+                                    conn.release();
                                     done(1, false);
                                 });
                             }else {
+                                var pathArr = imgPath[1].split('/');
+                                var fileName = pathArr[pathArr.length-1];
+                                var filePath = "./public/images/items/"+fileName;
+                                logger.info(filePath);
+                                fs.unlink(filePath, function(err){
+                                    logger.error('err',err);
+                                    done(3, false);
+                                });
+                                conn.release();
                                 done(0, true);
                             }
                         });

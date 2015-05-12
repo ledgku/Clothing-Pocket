@@ -130,6 +130,12 @@ router.post('/modify', function (req, res, next) {
                 } else if (flag == 1) {
                     logger.error('db_coordi.modifyDesc conn.query Error');
                     res.json({"Result": "connQueryError"});
+                }else if (flag ==2) {
+                    logger.error('db_item.delete rollback');
+                    res.json({"Result": "rollback"});
+                }else if (flag == 3){
+                    logger.error('db_item.delete unlink error');
+                    res.json({"Result": "unlinkError"});
                 }
             }
         });
