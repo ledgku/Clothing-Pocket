@@ -9,6 +9,11 @@ var log = require('./logger');
 var multer = require('multer');
 var async = require('async');
 var cron = require('cron');
+var session = require('express-session');
+var redis = require('redis');
+var RedisStore = require('connect-redis')(session);
+var client = redis.createClient();
+client.select(3);
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -31,6 +36,19 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+// redis session
+app.use(session({
+    secret: 'keyboard cat',
+    resave: true,
+    saveUninitialized: true,
+    store: new RedisStore({
+        host: 'localhost',
+        port: 6739,
+        ttl: 60*60,
+        client: client
+    })
+}));
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
@@ -62,8 +80,6 @@ app.use(function (req, res, next) {
     err.status = 404;
     next(err);
 });
-
-// error handlers
 
 // development error handler
 // will print stacktrace

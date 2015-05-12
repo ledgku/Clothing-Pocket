@@ -134,3 +134,51 @@ exports.fbjoin = function (datas, done) {
         });
     });
 }
+
+exports.login = function (datas, done) {
+    logger.info('db_user datas ', datas);
+
+    pool.getConnection(function(err, conn){
+        var sql = "select count(*) cnt from user where USER_ID=? and USER_PASSWORD=?";
+        conn.query(sql, datas, function(err, row){
+            if(err){
+                logger.error('db_user select err ', err);
+                conn.release();
+                done(false);
+            }else {
+                logger.info('db_user select row ', row);
+                if(row[0].cnt==1) {
+                    conn.release();
+                    done(true);
+                }else{
+                    conn.release();
+                    done(false);
+                }
+            }
+        });
+    });
+}
+
+exports.update = function (data, done) {
+    logger.info('db_user update data ', data);
+
+    pool.getConnection(function(err, conn){
+        var sql = "select user.USER_NICKNAME from user where user.USER_ID=?";
+        conn.query(sql, data, function(err, row){
+            if(err){
+                logger.error('db_user select err ', err);
+                conn.release();
+                done(false);
+            }else {
+                logger.info('db_user select row ', row);
+                if(row.affectedRows == 1) {
+                    conn.release();
+                    done(true, row);
+                }else{
+                    conn.release();
+                    done(false);
+                }
+            }
+        });
+    });
+}

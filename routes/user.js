@@ -141,11 +141,46 @@ router.post('/fbjoin', function(req, res, next) {
 });
 
 router.post('/login', function(req, res, next) {
-    res.json({"Result":"ok"});
+    logger.info('req.body', req.body);
+    var id = req.body.id;
+    var passwd = req.body.passwd;
+    var datas = [id, passwd];
+    db_user.login(datas, function(success){
+        if(success){
+            logger.info('/user/login success');
+            req.session.user_id = id;
+            res.json({"Result":"ok"});
+        }else{
+            logger.info('/user/login fail');
+            res.json({"Result":"fail"});
+        }
+    })
+});
+
+router.post('/logout', function(req, res, next) {
+    req.session.destroy(function(err){
+        if(err) {
+            logger.error('/user/logout error ', err);
+            res.json({"Result": "fail"});
+        }else{
+            logger.info('/user/logout success');
+            res.json({"Result":"ok"});
+        }
+    })
 });
 
 router.post('/update', function(req, res, next) {
-    res.json({"Result":"ok"});
+    logger.info('/user/update req.session.user_id ', req.session.user_id);
+    var id = req.session.user_id;
+    db_user.update(id, function(success, row){
+        if(success){
+            logger.error('/user/update success');
+            res.json({"id":id, "nickname":row[0].USER_NICKNAME});
+        }else{
+            logger.error('/user/update error');
+            res.json({"Result": "fail"});
+        }
+    });
 });
 
 router.post('/update/password', function(req, res, next) {
