@@ -6,58 +6,161 @@ router.post('/', function (req, res, next) {
     var coordi_path = 'http://52.68.143.198:3000/coordi/img/';
     var profile_path = 'http://52.68.143.198:3000/user/img/';
 
-    res.json([
+    res.json(
         {
-            "mycloset_coordi_today": [{"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'}
+            "myclosetCoordiToday": [{
+                "CD_NUM": 9,
+                "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+            }, {
+                "CD_NUM": 9,
+                "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+            },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                }
             ]
-        },
-        {
-            "mycloset_coordi_wear_recent": [{"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'}
+            ,
+            "myclosetCoordiWearRecent": [{
+                "CD_NUM": 9,
+                "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+            },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                }
             ]
-        },
-        {
-            "mycloset_both_reg_recent": [{"img_url": item_path + 'shirts'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": item_path + 'shirts'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": item_path + 'shirts'},
-                {"img_url": coordi_path + 'coordi'}
+            ,
+            "myclosetBothRegRecent": [{
+                "CD_NUM": 9,
+                "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+            },
+                {
+                    "ITEM_NUM": 33,
+                    "ITEM_URL": "http://52.68.143.198/item/img/shirts1431669925054.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "ITEM_NUM": 33,
+                    "ITEM_URL": "http://52.68.143.198/item/img/shirts1431669925054.png"
+                },
+                {
+                    "ITEM_NUM": 33,
+                    "ITEM_URL": "http://52.68.143.198/item/img/shirts1431669925054.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                }
             ]
-        },
-        {
-            "list_coordi_hot": [{"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'},
-                {"img_url": coordi_path + 'coordi'}
+            ,
+
+            "listCoordiHot": [{
+                "CD_NUM": 9,
+                "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+            },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                },
+                {
+                    "CD_NUM": 9,
+                    "CD_URL": "http://52.68.143.198/coordi/img/coordi1431671363876.png"
+                }
             ]
-        },
-        {
-            "list_user_hot": [{"img_url": profile_path + 'profile'},
-                {"img_url": profile_path + 'profile'},
-                {"img_url": profile_path + 'profile'},
-                {"img_url": profile_path + 'profile'},
-                {"img_url": profile_path + 'profile'},
-                {"img_url": profile_path + 'profile'},
-                {"img_url": profile_path + 'profile'}
+            ,
+
+            "listUserHot": [{
+                "USER_NICKNAME": "DK",
+                "USER_PROFILE_URL": "http://52.68.143.198/user/img/default.png"
+            },
+                {
+                    "USER_NICKNAME": "DK",
+                    "USER_PROFILE_URL": "http://52.68.143.198/user/img/default.png"
+                },
+                {
+                    "USER_NICKNAME": "DK",
+                    "USER_PROFILE_URL": "http://52.68.143.198/user/img/default.png"
+                },
+                {
+                    "USER_NICKNAME": "DK",
+                    "USER_PROFILE_URL": "http://52.68.143.198/user/img/default.png"
+                },
+                {
+                    "USER_NICKNAME": "DK",
+                    "USER_PROFILE_URL": "http://52.68.143.198/user/img/default.png"
+                },
+                {
+                    "USER_NICKNAME": "DK",
+                    "USER_PROFILE_URL": "http://52.68.143.198/user/img/default.png"
+                },
+                {
+                    "USER_NICKNAME": "DK",
+                    "USER_PROFILE_URL": "http://52.68.143.198/user/img/default.png"
+                }
             ]
-        }
-    ]);
+
+
+        });
 });
 
 module.exports = router;

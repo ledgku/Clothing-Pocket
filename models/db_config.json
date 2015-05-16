@@ -1,7 +1,7 @@
 {
 	"connectionLimit": 150,
-	"host": "127.0.0.1",
-	"user": "root",
-	"password": "1234",
+	"host": "52.68.143.198",
+	"user": "james",
+	"password": "clothingpocket!@#$",
 	"database": "pocket"
 }

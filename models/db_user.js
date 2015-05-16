@@ -309,3 +309,60 @@ exports.update = function (data, done) {
         });
     });
 }
+
+exports.changepasswd = function (datas, done) {
+    logger.info('db_user changepasswd datas ', datas);
+    pool.getConnection(function (err, conn) {
+        async.waterfall([
+            function (callback) {
+                var sql = "select count(*) cnt from user where user.USER_NICKNAME=? and user.USER_PASSWORD=?";
+                var data = [datas[0], datas[1]];
+                conn.query(sql, data, function (err, row) {
+                    if (err) {
+                        logger.error('db_user changepasswd conn.query 1/2 Error', err);
+                        callback(err);
+                    } else {
+                        logger.info('db_user changepasswd cnt', row[0].cnt);
+                        callback(null, true, row[0].cnt);
+                    }
+                });
+            }, function (success, cnt, callback) {
+                if (success) {
+                    if (cnt == 1) {
+                        var sql = "update user set user.USER_PASSWORD=? where user.USER_NICKNAME=?";
+                        var data = [datas[2], datas[0]];
+                        conn.query(sql, data, function (err, row) {
+                            if (err) {
+                                logger.error('db_user changepasswd conn.query 2/2 Error', err);
+                                callback(err);
+                            } else {
+                                callback(null, true);
+                            }
+                        });
+                    } else {
+                        logger.info('db_user changepasswd cnt==0');
+                        callback(null, false);
+                    }
+                } else {
+                    callback(null, false);
+                }
+            }
+        ], function (err, success) {
+            if(err){
+                logger.error('db_user changepasswd error ', err);
+                conn.release();
+                done(false);
+            }else {
+                if (success) {
+                    logger.info('db_user changepasswd success');
+                    conn.release();
+                    done(true);
+                } else {
+                    logger.info('db_user changepasswd fail');
+                    conn.release();
+                    done(false);
+                }
+            }
+        });
+    });
+}

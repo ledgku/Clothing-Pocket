@@ -23,13 +23,14 @@ router.use(multer({
 
 router.post('/add', function (req, res, next) {
     logger.info('req.body', req.body);
+    logger.info('req.session', req.session);
     logger.info('req.files', req.files);
 
     var item = req.files;
     var filename = req.files.file.name;
-    var filePath = 'http://localhost/coordi/img/'+filename;
-    var nickname = req.body.nickname;
-    var datas = [nickname, filePath];
+    var filePath = 'http://52.68.143.198/coordi/img/'+filename;
+    var nickname = req.session.nickname;
+    var datas = [nickname   , filePath];
     logger.info('datas ', datas);
 
     if (JSON.stringify(item) == '{}') {
@@ -147,7 +148,7 @@ router.post('/good', function (req, res, next) {
     logger.info('req.body ', req.body);
 
     var coordi_num = req.body.coordiNum;
-    var nickname = req.body.nickname;
+    var nickname = req.session.nickname;
     var datas = [coordi_num, nickname];
 
     if(!coordi_num){
@@ -199,12 +200,105 @@ router.post('/detail', function (req, res, next) {
     }
 });
 
+router.post('/modify/info', function(req, res, next){
+    logger.info('req.body', req.body);
+    var coordi_num = req.body.coordiNum;
+
+    if(!coordi_num){
+        logger.info('coordiNumNull');
+        res.json({"Result":"coordiNumNull"});
+    }else{
+        db_coordi.modifyInfo(coordi_num, function(success, results){
+            if(success){
+                logger.info('success, results', success, results);
+                if(results=='null'){
+                    logger.info('/coordi/modify/info prop not exist');
+                    res.json({"Results":"none"});
+                }else{
+                    logger.info('/coordi/modify/info prop exist');
+                    res.json({"Results":[results[0], results[1], results[2]]});
+                }
+            }else{
+                logger.info('/coordi/modify/info fail');
+                res.json({"Results":"fail"});
+            }
+        });
+    }
+});
+
+router.post('/reply', function(req, res, next){
+    logger.info('/reply coordi.CD_NUM ', req.body.coordiNum);
+    var coordi_num = req.body.coordiNum;
+
+    if(!coordi_num){
+        logger.info('coordiNumNull');
+        res.json({"Result":"coordiNumNull"});
+    }else{
+        db_coordi.reply(coordi_num, function(success, results){
+            if(success){
+                if(results!='null'){
+                    logger.info('/coordi/reply success');
+                    res.json({"Result":results});
+                }else{
+                    logger.info('/coordi/reply cnt 0');
+                    res.json({"Result":"replyCnt0"});
+                }
+            }else{
+                logger.error('/coordi/reply error');
+                res.json({"Result":"fail"});
+            }
+        });
+    }
+});
+
 router.post('/reply/reg', function (req, res, next) {
-    res.json({"result": "success"});
+    logger.info('/reply req.session', req.session);
+    logger.info('/reply req.body ', req.body);
+
+    var coordi_num = req.body.coordiNum;
+    var nickname = req.session.nickname;
+    var re_contents = req.body.contents;
+    var datas = [coordi_num, nickname, re_contents];
+
+    if(!(coordi_num&&nickname&&re_contents)){
+        logger.info('nullInputExist');
+        res.json({"Result":"nullInputExist"});
+    }else{
+        db_coordi.replyReg(datas, function(success){
+            if(success){
+                logger.info('/reply/reg success');
+                res.json({"Result":"ok"});
+            }else{
+                logger.error('/reply/reg fail');
+                res.json({"Result":"fail"});
+            }
+        });
+    }
 });
 
 router.post('/reply/del', function (req, res, next) {
-    res.json({"result": "success"});
+    logger.info('/reply req.session', req.session);
+    logger.info('/reply req.body ', req.body);
+
+    var coordi_num = req.body.coordiNum;
+    var nickname = req.session.nickname;
+    var regdate = req.body.regdate;
+    var datas = [coordi_num, nickname, regdate];
+
+    if(!(coordi_num&&nickname&&regdate)){
+        logger.info('nullInputExist');
+        res.json({"Result":"nullInputExist"});
+    }else{
+        db_coordi.replyDel(datas, function(success){
+            if(success){
+                logger.info('/reply/del success');
+                res.json({"Result":"ok"});
+            }else{
+                logger.error('/reply/del fail');
+                res.json({"Result":"fail"});
+            }
+        });
+    }
 });
 
 module.exports = router;

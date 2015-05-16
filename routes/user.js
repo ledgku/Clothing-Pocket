@@ -191,7 +191,29 @@ router.post('/update', function(req, res, next) {
 });
 
 router.post('/update/password', function(req, res, next) {
-    res.json({"Result":"ok"});
+    logger.info('req.session.nickname ', req.session.nickname);
+    logger.info('req.body ', req.body);
+    var nickname = req.session.nickname;
+    var current_passwd = req.body.currentPasswd;
+    var new_passwd = req.body.newPasswd;
+    var new_passwd2 = req.body.newPasswd2;
+
+    if(new_passwd!=new_passwd2){
+        logger.error('/update/passwd new_passwd!=new_passwd2');
+        res.json({"Result":"newPasswdMatchError"});
+    }else{
+        logger.info('/update/passwd new_passwd==new_passwd2');
+        var datas = [nickname, current_passwd, new_passwd];
+        db_user.changepasswd(datas, function(success){
+            if(success){
+                logger.info('/update/passwd success');
+                res.json({"Result":"ok"});
+            }else{
+                logger.info('/update/passwd fail');
+                res.json({"Result":"fail"});
+            }
+        });
+    }
 });
 
 router.post('/profile/add', function(req, res, next) {

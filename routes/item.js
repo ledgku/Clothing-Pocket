@@ -30,13 +30,14 @@ router.use(multer({
 
 router.post('/add', function (req, res, next) {
     logger.info('req.body', req.body);
+    logger.info('req.session', req.session);
     logger.info('req.files', req.files);
 
     var item = req.files;
     var filename = req.files.file.name;
     logger.info('filename ', filename);
-    var filePath = 'http://localhost/item/img/' + filename;
-    var nickname = req.body.nickname;
+    var filePath = 'http://52.68.143.198/item/img/' + filename;
+    var nickname = req.session.nickname;
     var datas = [nickname, filePath];
     logger.info('datas ', datas);
 
@@ -159,7 +160,7 @@ router.post('/good', function (req, res, next) {
     logger.info('req.body ', req.body);
 
     var item_num = req.body.itemNum;
-    var nickname = req.body.nickname;
+    var nickname = req.session.nickname;
     var datas = [item_num, nickname];
 
     if(!item_num){
@@ -194,7 +195,7 @@ router.post('/detail', function (req, res, next) {
 
     if (!item_num) {
         logger.info('itemNumNull');
-        res.json({"result": 'itemNumNull'});
+        res.json({"Result": 'itemNumNull'});
     } else {
         db_item.detail(item_num, function (success, results) {
             if (success) {
@@ -206,6 +207,31 @@ router.post('/detail', function (req, res, next) {
             } else {
                 logger.error('/item/detail fail');
                 res.json({"Result": "Fail"});
+            }
+        });
+    }
+});
+
+router.post('/modify/info', function(req, res, next){
+    logger.info('req.body', req.body);
+    var item_num = req.body.itemNum;
+
+    if(!item_num){
+        logger.info('itemNumNull');
+        res.json({"Result":"itemNumNull"});
+    }else{
+        db_item.modifyInfo(item_num, function(success, results){
+            if(success){
+                logger.info('success, results', success, results);
+                if(results=='null'){
+                    logger.info('/item/modify/info prop not exist');
+                    res.json({"Results":"none"});
+                }else{
+                    logger.info('/item/modify/info prop exist');
+                    res.json({"Results":[results[0], results[1], results[2]]});
+                }
+            }else{
+
             }
         });
     }

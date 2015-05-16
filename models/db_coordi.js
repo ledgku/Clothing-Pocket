@@ -24,11 +24,12 @@ exports.add = function (datas, done) {
                 done(1, false);
             }else{
                 logger.info('row ', row);
-                var success=false;
                 if(row.affectedRows == 1){
-                    success = true;
                     conn.release();
-                    done(0, success);
+                    done(0, true);
+                }else{
+                    conn.release();
+                    done(1, false);
                 }
             }
         });
@@ -139,12 +140,13 @@ exports.modifyDesc = function (datas, done) {
                     done(1, false);
                 } else {
                     logger.info('row ', row);
-                    var success = false;
                     if (row.affectedRows == 1) {
-                        success = true;
+                        conn.release();
+                        done(0, true);
+                    }else{
+                        conn.release();
+                        done(1, false);
                     }
-                    conn.release();
-                    done(0, success);
                 }
             });
         }
@@ -328,7 +330,7 @@ exports.detail = function (data, done) {
         } else {
             async.series([
                 function (callback) {
-                    var sql = "select coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
+                    var sql = "select coordi.CD_NUM, coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
                     conn.query(sql, coordi_num, function(err, row){
                         if(err){
                             logger.error('coordi detail conn.query error 1/5', err);
@@ -361,7 +363,7 @@ exports.detail = function (data, done) {
                         }
                     });
                 }, function (callback){
-                    var sql = "select item.ITEM_NUM, item.ITEM_URL from COORDI_ITEM join ITEM on coordi_item.ITEM_NUM = item.ITEM_NUM where coordi_item.CD_NUM=?";
+                    var sql = "select item.ITEM_NUM, item.ITEM_URL from coordi_item join item on coordi_item.ITEM_NUM = item.ITEM_NUM where coordi_item.CD_NUM=?";
                     conn.query(sql, coordi_num, function(err, row){
                         if(err){
                             logger.error('item detail conn.query error 4/5', err);
@@ -392,6 +394,120 @@ exports.detail = function (data, done) {
                     logger.info("/coordi/detail info");
                     conn.release();
                     done(true, results);
+                }
+            });
+        }
+    });
+}
+
+exports.modifyInfo = function (data, done) {
+    logger.info('data ', data);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(false);
+        } else {
+            var sql = "select coordi_prop.COORDI_PROP from coordi_prop where coordi_prop.CD_NUM=?";
+            conn.query(sql, data, function (err, row) {
+                if (err) {
+                    logger.error('db_coordi modifyInfo conn.query error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    if (row.length == 0) {
+                        conn.release();
+                        done(true, 'null');
+                    } else {
+                        conn.release();
+                        done(true, row);
+                    }
+                }
+            });
+        }
+    });
+}
+
+exports.reply = function (data, done) {
+    logger.info('db_coordi reply data ', data);
+
+    pool.getConnection(function(err, conn){
+        if(err){
+            logger.error('getConnection error', err);
+            done(false);
+        }else{
+            var sql = "select coordi_reply.CD_NUM, coordi_reply.USER_NICKNAME, coordi_reply.RE_CONTENTS, coordi_reply.RE_REGDATE from coordi_reply where coordi_reply.CD_NUM=?";
+            conn.query(sql, data, function(err, rows){
+                if(err){
+                    logger.error('db_coordi reply conn.query error', err);
+                    conn.release();
+                    done(false);
+                }else{
+                    if (rows.length == 0) {
+                        conn.release();
+                        done(true, 'null');
+                    } else {
+                        conn.release();
+                        done(true, rows);
+                    }
+                }
+            });
+        }
+    });
+}
+
+exports.replyReg = function (datas, done) {
+    logger.info('db_coordi replyReg datas ', datas);
+
+    pool.getConnection(function(err, conn){
+       if(err){
+           logger.error('getConnection error', err);
+           done(false);
+       }else{
+           var sql = "insert into coordi_reply(CD_NUM, USER_NICKNAME, RE_CONTENTS, RE_REGDATE) values(?,?,?,now())";
+           conn.query(sql, datas, function(err, row){
+               if(err){
+                   logger.error('db_coordi replyReg conn.query error', err);
+                   conn.release();
+                   done(false);
+               }else{
+                   if (row.affectedRows == 1) {
+                       conn.release();
+                       done(true);
+                   }else{
+                       conn.release();
+                       done(false);
+                   }
+
+               }
+           });
+       }
+    });
+}
+
+exports.replyDel = function (datas, done) {
+    logger.info('db_coordi replyDel datas ', datas);
+
+    pool.getConnection(function(err, conn){
+        if(err){
+            logger.error('getConnection error', err);
+            done(false);
+        }else{
+            var sql = "delete from coordi_reply where coordi_reply.CD_NUM=? and coordi_reply.USER_NICKNAME=? and coordi_reply.RE_REGDATE=?";
+            conn.query(sql, datas, function(err, row){
+                if(err){
+                    logger.error('db_coordi replyReg conn.query error', err);
+                    conn.release();
+                    done(false);
+                }else{
+                    if (row.affectedRows == 1) {
+                        conn.release();
+                        done(true);
+                    }else{
+                        conn.release();
+                        done(false);
+                    }
+
                 }
             });
         }

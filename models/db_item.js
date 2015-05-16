@@ -14,23 +14,24 @@ exports.add = function (datas, done) {
         if (err) {
             logger.error('getConnection error', err);
             done(0, false);
-        }
-        var sql = "insert into item(USER_NICKNAME, ITEM_REGDATE, ITEM_URL) values(?, now(), ?)";
-        conn.query(sql, datas, function (err, row) {
-            if (err) {
-                logger.error('item add conn.query error ', err);
-                conn.release();
-                done(1, false);
-            } else {
-                logger.info('row ', row);
-                var success = false;
-                if (row.affectedRows == 1) {
-                    success = true;
+        }else {
+            var sql = "insert into item(USER_NICKNAME, ITEM_REGDATE, ITEM_URL) values(?, now(), ?)";
+            conn.query(sql, datas, function (err, row) {
+                if (err) {
+                    logger.error('item add conn.query error ', err);
+                    conn.release();
+                    done(1, false);
+                } else {
+                    logger.info('row ', row);
+                    var success = false;
+                    if (row.affectedRows == 1) {
+                        success = true;
+                    }
+                    conn.release();
+                    done(0, success);
                 }
-                conn.release();
-                done(0, success);
-            }
-        });
+            });
+        }
     });
 }
 
@@ -163,18 +164,18 @@ exports.delete = function (data, done) {
                     function (callback) {
                         if (err) callback(err);
                         else callback(null);
-                    }, function(callback){
+                    }, function (callback) {
                         var sql = "select ITEM_URL from item where ITEM_NUM=?";
-                        conn.query(sql, item_num, function(err, row){
-                           if(err){
-                               logger.error('good_item_url select error');
-                               callback(err);
-                           }else{
-                               logger.info('good_item_url select success');
-                               callback(null, row[0].ITEM_URL);
-                           }
+                        conn.query(sql, item_num, function (err, row) {
+                            if (err) {
+                                logger.error('good_item_url select error');
+                                callback(err);
+                            } else {
+                                logger.info('good_item_url select success');
+                                callback(null, row[0].ITEM_URL);
+                            }
                         });
-                    },function (callback) {
+                    }, function (callback) {
                         var sql = "delete from good_item where ITEM_NUM=?";
                         conn.query(sql, item_num, function (err, row) {
                             if (err) {
@@ -239,13 +240,13 @@ exports.delete = function (data, done) {
                                     conn.release();
                                     done(1, false);
                                 });
-                            }else {
+                            } else {
                                 var pathArr = imgPath[1].split('/');
-                                var fileName = pathArr[pathArr.length-1];
-                                var filePath = "./public/images/items/"+fileName;
+                                var fileName = pathArr[pathArr.length - 1];
+                                var filePath = "./public/images/items/" + fileName;
                                 logger.info(filePath);
-                                fs.unlink(filePath, function(err){
-                                    logger.error('err',err);
+                                fs.unlink(filePath, function (err) {
+                                    logger.error('err', err);
                                     done(3, false);
                                 });
                                 conn.release();
@@ -262,56 +263,56 @@ exports.delete = function (data, done) {
 exports.good = function (datas, done) {
     logger.info('datas', datas);
 
-    pool.getConnection(function(err, conn){
-       if(err){
-           logger.error('getConnection error', err);
-           done(0, false);
-       }else{
-           async.waterfall([
-               function(callback){
-                   var sql = "select count(*) cnt from good_item where ITEM_NUM=? and USER_NICKNAME=?";
-                   conn.query(sql, datas, function(err, row){
-                       if(err){
-                           callback(err, 'db_item good conn.query error');
-                       }else{
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(0, false);
+        } else {
+            async.waterfall([
+                function (callback) {
+                    var sql = "select count(*) cnt from good_item where ITEM_NUM=? and USER_NICKNAME=?";
+                    conn.query(sql, datas, function (err, row) {
+                        if (err) {
+                            callback(err, 'db_item good conn.query error');
+                        } else {
                             callback(null, row[0].cnt);
-                       }
-                   })
-               }, function(cnt, callback){
-                   if(cnt==1){
-                       //삭제
-                       var sql = "delete from good_item where ITEM_NUM=? and USER_NICKNAME=?";
-                        conn.query(sql, datas, function(err, row){
-                           if(err){
-                               callback(err, "good_itemDeleteError");
-                           }else{
-                               callback(null, "ok");
-                           }
+                        }
+                    })
+                }, function (cnt, callback) {
+                    if (cnt == 1) {
+                        //삭제
+                        var sql = "delete from good_item where ITEM_NUM=? and USER_NICKNAME=?";
+                        conn.query(sql, datas, function (err, row) {
+                            if (err) {
+                                callback(err, "good_itemDeleteError");
+                            } else {
+                                callback(null, "ok");
+                            }
                         });
-                   }else{
-                       //입력
-                       var sql = "insert into good_item values(?,?)";
-                       conn.query(sql, datas, function(err, row){
-                           if(err){
-                               callback(err, "good_itemInsertError");
-                           }else{
-                               callback(null, "ok");
-                           }
-                       });
-                   }
-               }
-           ],function(err, Msg){
-               if(Msg=="ok"){
-                   logger.info("좋아요 변경 성공");
-                   conn.release();
-                   done(0, true);
-               }else{
-                   logger.error('err ', Msg);
-                   conn.release();
-                   done(2, false);
-               }
-           });
-       }
+                    } else {
+                        //입력
+                        var sql = "insert into good_item values(?,?)";
+                        conn.query(sql, datas, function (err, row) {
+                            if (err) {
+                                callback(err, "good_itemInsertError");
+                            } else {
+                                callback(null, "ok");
+                            }
+                        });
+                    }
+                }
+            ], function (err, Msg) {
+                if (Msg == "ok") {
+                    logger.info("좋아요 변경 성공");
+                    conn.release();
+                    done(0, true);
+                } else {
+                    logger.error('err ', Msg);
+                    conn.release();
+                    done(2, false);
+                }
+            });
+        }
     });
 }
 
@@ -327,59 +328,87 @@ exports.detail = function (data, done) {
         } else {
             async.series([
                 function (callback) {
-                    var sql = "select item.ITEM_URL, item.ITEM_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from item join user on item.USER_NICKNAME = user.USER_NICKNAME and item.ITEM_NUM=?";
-                    conn.query(sql, item_num, function(err, row){
-                       if(err){
-                           logger.error('item detail conn.query error 1/4', err);
-                           callback(err);
-                       }else{
-                           logger.info('item detail success 1/4');
-                           callback(null, row);
-                       }
+                    var sql = "select item.ITEM_NUM, item.ITEM_URL, item.ITEM_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from item join user on item.USER_NICKNAME = user.USER_NICKNAME and item.ITEM_NUM=?";
+                    conn.query(sql, item_num, function (err, row) {
+                        if (err) {
+                            logger.error('item detail conn.query error 1/4', err);
+                            callback(err);
+                        } else {
+                            logger.info('item detail success 1/4');
+                            callback(null, row);
+                        }
                     });
-                }, function (callback){
+                }, function (callback) {
                     var sql = "select count(*) cnt from good_item where ITEM_NUM=?";
-                    conn.query(sql, item_num, function(err, row){
-                       if(err){
-                           logger.error('item detail conn.query error 2/4', err);
-                           callback(err);
-                       } else{
-                           logger.info('item detail success 2/4');
-                           callback(null, row);
-                       }
+                    conn.query(sql, item_num, function (err, row) {
+                        if (err) {
+                            logger.error('item detail conn.query error 2/4', err);
+                            callback(err);
+                        } else {
+                            logger.info('item detail success 2/4');
+                            callback(null, row);
+                        }
                     });
-                }, function (callback){
+                }, function (callback) {
                     var sql = "select p.ITEM_PROP_CONTENT from item join (select item_prop.ITEM_NUM, item_prop_code.ITEM_PROP_CONTENT from item_prop join item_prop_code on item_prop.ITEM_PROP = item_prop_code.ITEM_PROP) p where item.ITEM_NUM = p.ITEM_NUM and item.ITEM_NUM=?";
-                    conn.query(sql, item_num, function(err, row){
-                        if(err){
+                    conn.query(sql, item_num, function (err, row) {
+                        if (err) {
                             logger.error('item detail conn.query error 3/4', err);
                             callback(err);
-                        } else{
+                        } else {
                             logger.info('item detail success 3/4');
                             callback(null, row);
                         }
                     });
-                }, function (callback){
+                }, function (callback) {
                     var sql = "select coordi.CD_NUM, coordi.CD_URL from coordi join (select coordi_item.CD_NUM from item join coordi_item on item.ITEM_NUM = coordi_item.ITEM_NUM and item.ITEM_NUM=?) p where coordi.CD_NUM = p.CD_NUM limit 7";
-                    conn.query(sql, item_num, function(err, row){
-                        if(err){
+                    conn.query(sql, item_num, function (err, row) {
+                        if (err) {
                             logger.error('item detail conn.query error 4/4', err);
                             callback(err);
-                        } else{
+                        } else {
                             logger.info('item detail success 4/4');
                             callback(null, row);
                         }
                     });
                 }
             ], function (err, results) {
-                if(err){
+                if (err) {
                     logger.error("/item/detail error", err);
                     conn.release();
                     done(false);
-                }else{
+                } else {
                     logger.info("/item/detail info");
                     conn.release();
                     done(true, results);
+                }
+            });
+        }
+    });
+}
+
+exports.modifyInfo = function (data, done) {
+    logger.info('data ', data);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(false);
+        } else {
+            var sql = "select item_prop.ITEM_PROP from item_prop where item_prop.ITEM_NUM=?";
+            conn.query(sql, data, function (err, row) {
+                if (err) {
+                    logger.error('db_item modifyInfo conn.query error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    if (row.length == 0) {
+                        conn.release();
+                        done(true, 'null');
+                    } else {
+                        conn.release();
+                        done(true, row);
+                    }
                 }
             });
         }
