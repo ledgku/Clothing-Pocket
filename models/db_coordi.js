@@ -333,21 +333,32 @@ exports.detail = function (data, done) {
                     var sql = "select coordi.CD_NUM, coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
                     conn.query(sql, coordi_num, function(err, row){
                         if(err){
-                            logger.error('coordi detail conn.query error 1/5', err);
+                            logger.error('coordi detail conn.query error 1/6', err);
                             callback(err);
                         }else{
-                            logger.info('coordi detail success 1/5');
+                            logger.info('coordi detail success 1/6');
                             callback(null, row);
                         }
                     });
                 }, function (callback){
-                    var sql = "select count(*) cnt from good_coordi where CD_NUM=?";
+                    var sql = "select count(*) good_cnt from good_coordi where CD_NUM=?";
                     conn.query(sql, coordi_num, function(err, row){
                         if(err){
-                            logger.error('coordi detail conn.query error 2/5', err);
+                            logger.error('coordi detail conn.query error 2/6', err);
                             callback(err);
                         } else{
-                            logger.info('coordi detail success 2/5');
+                            logger.info('coordi detail success 2/6');
+                            callback(null, row);
+                        }
+                    });
+                }, function (callback){
+                    var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
+                    conn.query(sql, coordi_num, function(err, row){
+                        if(err){
+                            logger.error('coordi detail conn.query error 3/6', err);
+                            callback(err);
+                        } else{
+                            logger.info('coordi detail success 3/6');
                             callback(null, row);
                         }
                     });
@@ -355,10 +366,10 @@ exports.detail = function (data, done) {
                     var sql = "select p.COORDI_PROP_CONTENT from coordi join (select coordi_prop.CD_NUM, coordi_prop_code.COORDI_PROP_CONTENT from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP) p where coordi.CD_NUM = p.CD_NUM and coordi.CD_NUM=?";
                     conn.query(sql, coordi_num, function(err, row){
                         if(err){
-                            logger.error('coordi detail conn.query error 3/5', err);
+                            logger.error('coordi detail conn.query error 4/6', err);
                             callback(err);
                         } else{
-                            logger.info('coordi detail success 3/5');
+                            logger.info('coordi detail success 4/6');
                             callback(null, row);
                         }
                     });
@@ -366,10 +377,10 @@ exports.detail = function (data, done) {
                     var sql = "select item.ITEM_NUM, item.ITEM_URL from coordi_item join item on coordi_item.ITEM_NUM = item.ITEM_NUM where coordi_item.CD_NUM=?";
                     conn.query(sql, coordi_num, function(err, row){
                         if(err){
-                            logger.error('item detail conn.query error 4/5', err);
+                            logger.error('item detail conn.query error 5/6', err);
                             callback(err);
                         } else{
-                            logger.info('item detail success 4/5');
+                            logger.info('item detail success 5/6');
                             callback(null, row);
                         }
                     });
@@ -377,10 +388,10 @@ exports.detail = function (data, done) {
                     var sql = "select coordi.CD_NUM, coordi.CD_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME where coordi.USER_NICKNAME=(select coordi.USER_NICKNAME from coordi where coordi.CD_NUM=?) limit 7";
                     conn.query(sql, coordi_num, function(err, row){
                         if(err){
-                            logger.error('item detail conn.query error 5/5', err);
+                            logger.error('item detail conn.query error 6/6', err);
                             callback(err);
                         } else{
-                            logger.info('item detail success 5/5');
+                            logger.info('item detail success 6/6');
                             callback(null, row);
                         }
                     });

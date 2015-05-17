@@ -56,267 +56,113 @@ router.post('/coordi', function (req, res, next) {
 });
 
 router.post('/zzim/item', function (req, res, next) {
-    res.json([{
-        "img_url": "http://52.68.143.198:3000/item/img/shirts",
-        "profile_url": "http://52.68.143.198:3000/user/img/profile",
-        "nickname": "tester",
-        "good_num": "50",
-        "prop1": "학교",
-        "prop2": "흐림",
-        "prop3": "따듯한",
-        "description": "내가 제일 좋아하는 옷"
-    }, {
-        "img_url": "http://52.68.143.198:3000/item/img/shirts",
-        "profile_url": "http://52.68.143.198:3000/user/img/profile",
-        "nickname": "tester",
-        "good_num": "50",
-        "prop1": "학교",
-        "prop2": "흐림",
-        "prop3": "따듯한",
-        "description": "내가 제일 좋아하는 옷"
-    }, {
-        "img_url": "http://52.68.143.198:3000/item/img/shirts",
-        "profile_url": "http://52.68.143.198:3000/user/img/profile",
-        "nickname": "tester",
-        "good_num": "50",
-        "prop1": "학교",
-        "prop2": "흐림",
-        "prop3": "따듯한",
-        "description": "내가 제일 좋아하는 옷"
-    }, {
-        "img_url": "http://52.68.143.198:3000/item/img/shirts",
-        "profile_url": "http://52.68.143.198:3000/user/img/profile",
-        "nickname": "tester",
-        "good_num": "50",
-        "prop1": "학교",
-        "prop2": "흐림",
-        "prop3": "따듯한",
-        "description": "내가 제일 좋아하는 옷"
-    }, {
-        "img_url": "http://52.68.143.198:3000/item/img/shirts",
-        "profile_url": "http://52.68.143.198:3000/user/img/profile",
-        "nickname": "tester",
-        "good_num": "50",
-        "prop1": "학교",
-        "prop2": "흐림",
-        "prop3": "따듯한",
-        "description": "내가 제일 좋아하는 옷"
-    }, {
-        "img_url": "http://52.68.143.198:3000/item/img/shirts",
-        "profile_url": "http://52.68.143.198:3000/user/img/profile",
-        "nickname": "tester",
-        "good_num": "50",
-        "prop1": "학교",
-        "prop2": "흐림",
-        "prop3": "따듯한",
-        "description": "내가 제일 좋아하는 옷"
-    }, {
-        "img_url": "http://52.68.143.198:3000/item/img/shirts",
-        "profile_url": "http://52.68.143.198:3000/user/img/profile",
-        "nickname": "tester",
-        "good_num": "50",
-        "prop1": "학교",
-        "prop2": "흐림",
-        "prop3": "따듯한",
-        "description": "내가 제일 좋아하는 옷"
-    }
-    ]);
+    logger.info('req.session', req.session);
+    var nickname = req.session.nickname;
+
+    db_mycloset.zzimItem(nickname, function(success, items){
+        if(success){
+            if (success) {
+                logger.info('/mycloset/zzim/item success');
+                res.json({"myclosetZzimItems": items});
+            } else {
+                logger.info('/mycloset/zzim/item fail');
+                res.json({"Result": "fail"});
+            }
+        }
+    });
 });
 
 router.post('/zzim/coordi', function (req, res, next) {
-    res.json([
-        {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
+    logger.info('req.session', req.session);
+    var nickname = req.session.nickname;
+
+    db_mycloset.zzimCoordi(nickname, function(success, Coordis){
+        if(success){
+            if (success) {
+                logger.info('/mycloset/zzim/coordi success');
+                res.json({"myclosetZzimItems": Coordis});
+            } else {
+                logger.info('/mycloset/zzim/coordi fail');
+                res.json({"Result": "fail"});
+            }
         }
-    ]);
+    });
 });
 
 router.post('/item/search', function (req, res, next) {
-    res.json([
-        {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
+    logger.info('req.session', req.session);
+    var nickname = req.session.nickname;
+    var prop = req.body.itemProp;
+    var datas = [nickname, prop];
+
+    db_mycloset.searchPropItem(datas, function(success, items){
+        if(success){
+            if (success) {
+                logger.info('/mycloset/item/search success');
+                res.json({"searchPropItems": items});
+            } else {
+                logger.info('/mycloset/item/search fail');
+                res.json({"Result": "fail"});
+            }
         }
-    ]);
+    });
 });
 
 router.post('/coordi/search', function (req, res, next) {
-    res.json([
-        {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
+    logger.info('req.session', req.session);
+    var nickname = req.session.nickname;
+    var prop = req.body.coordiProp;
+    var datas = [nickname, prop];
+
+    db_mycloset.searchPropCoordi(datas, function(success, coordis){
+        if(success){
+            if (success) {
+                logger.info('/mycloset/coordi/search success');
+                res.json({"searchPropCoordis": coordis});
+            } else {
+                logger.info('/mycloset/coordi/search fail');
+                res.json({"Result": "fail"});
+            }
         }
-    ]);
+    });
 });
 
 router.post('/pick/item/search', function (req, res, next) {
-    res.json([
-        {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
-        }, {
-            "img_url": "http://52.68.143.198:3000/item/img/shirts"
+    logger.info('req.session', req.session);
+    var nickname = req.session.nickname;
+    var prop = req.body.itemProp;
+    var datas = [nickname, prop];
+
+    db_mycloset.searchZzimPropItem(datas, function(success, items){
+        if(success){
+            if (success) {
+                logger.info('/mycloset/pick/item/search success');
+                res.json({"searchPropZzimItems": items});
+            } else {
+                logger.info('/mycloset//pick/item/search fail');
+                res.json({"Result": "fail"});
+            }
         }
-    ]);
+    });
 });
 
 router.post('/pick/coordi/search', function (req, res, next) {
-    res.json([
-        {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi"
+    logger.info('req.session', req.session);
+    var nickname = req.session.nickname;
+    var prop = req.body.coordiProp;
+    var datas = [nickname, prop];
+
+    db_mycloset.searchZzimPropCoordi(datas, function(success, coordis){
+        if(success){
+            if (success) {
+                logger.info('/mycloset/pick/coordi/search success');
+                res.json({"searchPropZzimCoordis": coordis});
+            } else {
+                logger.info('/mycloset/pick/coordi/search fail');
+                res.json({"Result": "fail"});
+            }
         }
-    ]);
+    });
 });
 
 router.post('/coordi/wear/recent', function (req, res, next) {

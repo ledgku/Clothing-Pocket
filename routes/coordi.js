@@ -189,9 +189,9 @@ router.post('/detail', function (req, res, next) {
             if (success) {
                 logger.info("/coordi/detail success");
                 logger.info('results', results);
-                var datas = results[0].concat(results[1]);
-                var data = merge(datas[0], datas[1]);
-                res.json({"Info": data, "CoordiProp":results[2], "CoordiItems":results[3], "CoordiList":results[4]});
+                var datas = results[0].concat(results[1]).concat(results[2]);
+                var data = merge(datas[0], datas[1], datas[2]);
+                res.json({"Info": data, "CoordiProp":results[3], "CoordiItems":results[4], "CoordiList":results[5]});
             } else {
                 logger.error('/coordi/detail fail');
                 res.json({"Result": "Fail"});
