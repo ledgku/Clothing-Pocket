@@ -780,7 +780,7 @@ exports.searchZzimPropCoordi = function (datas, done) {
                                 logger.info("/mycloset/pick/coordi/search info");
                                 var coordiArr = results[0].concat(results[1]).concat(results[2]);
                                 var coordiInfo = merge(coordiArr[0], coordiArr[1], coordiArr[2]);
-                                var result = {"Info": coordiInfo, "ItemProp": results[3], "ItemCoordi": results[4]};
+                                var result = {"Info": coordiInfo, "CoordiProp": results[3]};
                                 coordis.push(result);
                                 callback();
                             }
@@ -873,6 +873,101 @@ exports.regRecentItemCoordis = function (datas, done) {
                             logger.info('db_mycloset regRecentItemCoordis success');
                             conn.release();
                             done(true, clothe);
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+exports.recentWearCoordi = function (data, done) {
+    logger.info('db_mycloset recentWearCoordi data ', data);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(false);
+        } else {
+            var sql = "select CD_NUM from calendar where USER_NICKNAME=? group by CD_NUM order by CAL_DATE desc";
+            conn.query(sql, data, function (err, rows) {
+                if (err) {
+                    logger.error('db_mycloset recentWearCoordi conn.query error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    var coordis = [];
+                    async.eachSeries(rows, function (row, callback) {
+                        var coordi_num = row.CD_NUM;
+                        logger.info('db_mycloset recentWearCoordi coordi_num', coordi_num);
+                        async.series([
+                            function (callback) {
+                                var sql = "select coordi.CD_NUM, coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('recentWearCoordi conn.query error 1/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('recentWearCoordi success 1/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select count(*) good_cnt from good_coordi where CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('recentWearCoordi conn.query error 2/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('recentWearCoordi success 2/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('recentWearCoordi detail conn.query error 3/4', err);
+                                        callback(err);
+                                    } else {
+                                        logger.info('recentWearCoordi detail success 3/4');
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select p.COORDI_PROP_CONTENT from coordi join (select coordi_prop.CD_NUM, coordi_prop_code.COORDI_PROP_CONTENT from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP) as p where coordi.CD_NUM = p.CD_NUM and coordi.CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('recentWearCoordi conn.query error 4/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('recentWearCoordi success 4/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }
+                        ], function (err, results) {
+                            if (err) {
+                                logger.error("/mycloset/coordi/wear/recent error", err);
+                                done(false);
+                            } else {
+                                logger.info("/mycloset/coordi/wear/recent info");
+                                var coordiArr = results[0].concat(results[1]).concat(results[2]);
+                                var coordiInfo = merge(coordiArr[0], coordiArr[1], coordiArr[2]);
+                                var result = {"Info": coordiInfo, "CoordiProp": results[3]};
+                                coordis.push(result);
+                                callback();
+                            }
+                        });
+                    }, function (err) {
+                        if (err) {
+                            logger.error('db_mycloset recentWearCoordi error ', err);
+                            conn.release();
+                            done(false);
+                        } else {
+                            logger.info('db_mycloset recentWearCoordi success');
+                            conn.release();
+                            done(true, coordis);
                         }
                     });
                 }
