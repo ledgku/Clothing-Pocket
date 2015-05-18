@@ -30,7 +30,7 @@ router.post('/add', function (req, res, next) {
     var filename = req.files.file.name;
     var filePath = 'http://52.68.143.198/coordi/img/'+filename;
     var nickname = req.session.nickname;
-    var datas = [nickname   , filePath];
+    var datas = [nickname, filePath];
     logger.info('datas ', datas);
 
     if (JSON.stringify(item) == '{}') {
@@ -296,6 +296,29 @@ router.post('/reply/del', function (req, res, next) {
             }else{
                 logger.error('/reply/del fail');
                 res.json({"Result":"fail"});
+            }
+        });
+    }
+});
+
+router.post('/prop/search', function (req, res, next) {
+    logger.info('/reply req.body ', req.body);
+
+    var search_prop = req.body.searchProp;
+
+    if(!search_prop){
+        logger.info('searchPropNull');
+        res.json({"Result":"searchPropNull"});
+    }else{
+        db_coordi.propSearch(search_prop, function(success, coordis){
+            if(success){
+                if (success) {
+                    logger.info('/coordi/prop/search success');
+                    res.json({"searchPropCoordis": coordis});
+                } else {
+                    logger.info('/coordi/prop/search fail');
+                    res.json({"Result": "fail"});
+                }
             }
         });
     }

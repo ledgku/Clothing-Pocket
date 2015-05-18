@@ -212,13 +212,13 @@ exports.coordi = function (data, done) {
                                         callback(null, row);
                                     }
                                 });
-                            }, function (callback){
+                            }, function (callback) {
                                 var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
-                                conn.query(sql, coordi_num, function(err, row){
-                                    if(err){
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
                                         logger.error('coordi detail conn.query error 3/4', err);
                                         callback(err);
-                                    } else{
+                                    } else {
                                         logger.info('coordi detail success 3/4');
                                         callback(null, row);
                                     }
@@ -269,11 +269,11 @@ exports.zzimItem = function (data, done) {
     logger.info('db_mycloset zzimItem data ', data);
 
     pool.getConnection(function (err, conn) {
-            if (err) {
-                logger.error('getConnection error', err);
-                done(false);
-            } else {
-                var sql = "select good_item.ITEM_NUM from good_item where good_item.USER_NICKNAME=?";
+        if (err) {
+            logger.error('getConnection error', err);
+            done(false);
+        } else {
+            var sql = "select good_item.ITEM_NUM from good_item where good_item.USER_NICKNAME=?";
             conn.query(sql, data, function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset item conn.query error', err);
@@ -391,13 +391,13 @@ exports.zzimCoordi = function (data, done) {
                                         callback(null, row);
                                     }
                                 });
-                            }, function (callback){
+                            }, function (callback) {
                                 var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
-                                conn.query(sql, coordi_num, function(err, row){
-                                    if(err){
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
                                         logger.error('zzimCoordi detail conn.query error 3/4', err);
                                         callback(err);
-                                    } else{
+                                    } else {
                                         logger.info('zzimCoordi detail success 3/4');
                                         callback(null, row);
                                     }
@@ -570,13 +570,13 @@ exports.searchPropCoordi = function (datas, done) {
                                         callback(null, row);
                                     }
                                 });
-                            }, function (callback){
+                            }, function (callback) {
                                 var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
-                                conn.query(sql, coordi_num, function(err, row){
-                                    if(err){
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
                                         logger.error('searchPropCoordi detail conn.query error 3/4', err);
                                         callback(err);
-                                    } else{
+                                    } else {
                                         logger.info('searchPropCoordi detail success 3/4');
                                         callback(null, row);
                                     }
@@ -749,13 +749,13 @@ exports.searchZzimPropCoordi = function (datas, done) {
                                         callback(null, row);
                                     }
                                 });
-                            }, function (callback){
+                            }, function (callback) {
                                 var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
-                                conn.query(sql, coordi_num, function(err, row){
-                                    if(err){
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
                                         logger.error('searchZzimPropCoordi detail conn.query error 3/4', err);
                                         callback(err);
-                                    } else{
+                                    } else {
                                         logger.info('searchZzimPropCoordi detail success 3/4');
                                         callback(null, row);
                                     }
@@ -794,6 +794,85 @@ exports.searchZzimPropCoordi = function (datas, done) {
                             logger.info('db_mycloset searchZzimPropCoordi success');
                             conn.release();
                             done(true, coordis);
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+exports.regRecentItemCoordis = function (datas, done) {
+    logger.info('db_mycloset regRecentItemCoordis data ', datas);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(false);
+        } else {
+            var sql = "select a.NUM, a.URL from (select ITEM_NUM as NUM, ITEM_URL as URL, ITEM_REGDATE as REGDATE from item where ITEM_MODIFLAG=1 and USER_NICKNAME=? union select CD_NUM as NUM, CD_URL as URL, CD_REGDATE as REGDATE from coordi where USER_NICKNAME=?) a order by a.REGDATE limit 7";
+            conn.query(sql, datas, function (err, rows) {
+                if (err) {
+                    logger.error('db_mycloset regRecentItemCoordis conn.query error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    var clothe = [];
+                    async.eachSeries(rows, function (row, callback) {
+                        var url = row.URL;
+                        async.waterfall([
+                            function (callback) {
+                                var type = url.split('/')[3];
+                                logger.info('db_mycloset regRecentItemCoordis type ', type);
+                                callback(null, type);
+                            }, function (type, callback) {
+                                if (type == 'item') {
+                                    var item_num = row.NUM;
+                                    logger.info('db_mycloset regRecentItemCoordis item_num ', item_num);
+                                    var sql = "select ITEM_NUM, ITEM_URL from item where ITEM_NUM=?";
+                                    conn.query(sql, item_num, function(err, row){
+                                        if(err){
+                                            logger.error('db_mycloset regRecentItemCoordis error', err);
+                                            callback(err);
+                                        }else{
+                                            logger.info('db_mycloset regRecentItemCoordis row', row);
+                                            callback(null, row);
+                                        }
+                                    });
+                                } else if (type = 'coordi') {
+                                    var coordi_num = row.NUM;
+                                    logger.info('db_mycloset regRecentItemCoordis coordi_num ', coordi_num);
+                                    var sql = "select CD_NUM, CD_URL from coordi where CD_NUM=?";
+                                    conn.query(sql, coordi_num, function(err, row){
+                                        if(err){
+                                            logger.error('db_mycloset regRecentItemCoordis error', err);
+                                            callback(err);
+                                        }else{
+                                            logger.info('db_mycloset regRecentItemCoordis row', row);
+                                            callback(null, row);
+                                        }
+                                    });
+                                }
+                            }
+                        ], function (err, row) {
+                            if(err){
+                                logger.error('db_mycloset regRecentItemCoordis error ', err);
+                                callback();
+                            }else{
+                                logger.info('db_mycloset regRecentItemCoordis success');
+                                clothe.push(row);
+                                callback();
+                            }
+                        });
+                    }, function(err){
+                        if(err){
+                            logger.error('db_mycloset regRecentItemCoordis error', err);
+                            conn.release();
+                            done(false);
+                        }else{
+                            logger.info('db_mycloset regRecentItemCoordis success');
+                            conn.release();
+                            done(true, clothe);
                         }
                     });
                 }

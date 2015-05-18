@@ -6,6 +6,7 @@ var pool = mysql.createPool(db_config);
 var logger = require('../logger');
 var async = require('async');
 var fs = require('fs');
+var merge = require('merge');
 
 //아이템 등록
 //datas = [nickname, coordiPath]
@@ -519,6 +520,101 @@ exports.replyDel = function (datas, done) {
                         done(false);
                     }
 
+                }
+            });
+        }
+    });
+}
+
+exports.propSearch = function (data, done) {
+    logger.info('db_coordi propSearch data ', data);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(false);
+        } else {
+            var sql = "select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP=coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?";
+            conn.query(sql, data, function (err, rows) {
+                if (err) {
+                    logger.error('db_coordi propSearch conn.query error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    var coordis = [];
+                    async.eachSeries(rows, function (row, callback) {
+                        var coordi_num = row.CD_NUM;
+                        logger.info('db_coordi propSearch coordi_num', coordi_num);
+                        async.series([
+                            function (callback) {
+                                var sql = "select coordi.CD_NUM, coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('propSearch conn.query error 1/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('propSearch success 1/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select count(*) good_cnt from good_coordi where CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('propSearch conn.query error 2/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('propSearch success 2/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback){
+                                var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
+                                conn.query(sql, coordi_num, function(err, row){
+                                    if(err){
+                                        logger.error('propSearch detail conn.query error 3/4', err);
+                                        callback(err);
+                                    } else{
+                                        logger.info('propSearch detail success 3/4');
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select p.COORDI_PROP_CONTENT from coordi join (select coordi_prop.CD_NUM, coordi_prop_code.COORDI_PROP_CONTENT from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP) as p where coordi.CD_NUM = p.CD_NUM and coordi.CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('propSearch conn.query error 4/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('propSearch success 4/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }
+                        ], function (err, results) {
+                            if (err) {
+                                logger.error("/coordi/prop/search error", err);
+                                done(false);
+                            } else {
+                                logger.info("/coordi/prop/search info");
+                                var coordiArr = results[0].concat(results[1]).concat(results[2]);
+                                var coordiInfo = merge(coordiArr[0], coordiArr[1], coordiArr[2]);
+                                var result = {"Info": coordiInfo, "ItemProp": results[3], "ItemCoordi": results[4]};
+                                coordis.push(result);
+                                callback();
+                            }
+                        });
+                    }, function (err) {
+                        if (err) {
+                            logger.error('db_coordi propSearch error ', err);
+                            conn.release();
+                            done(false);
+                        } else {
+                            logger.info('db_coordi propSearch success');
+                            conn.release();
+                            done(true, coordis);
+                        }
+                    });
                 }
             });
         }

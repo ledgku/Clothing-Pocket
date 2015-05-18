@@ -263,7 +263,6 @@ exports.login = function (datas, done) {
                 }
             }
         ], function (err, success, nick) {
-
             if (err) {
                 logger.error('/user/login err', err);
                 conn.release();
@@ -364,5 +363,53 @@ exports.changepasswd = function (datas, done) {
                 }
             }
         });
+    });
+}
+
+exports.userSearch = function (data, done) {
+    logger.info('db_user userSearch data ', data);
+    pool.getConnection(function (err, conn) {
+        if(err){
+            logger.error('getConnection error', err);
+            done(false);
+        }else{
+            var sql = "select USER_NICKNAME from user where USER_NICKNAME like ?";
+            conn.query(sql, data, function(err, rows){
+                if(err){
+                    logger.error('db_user userSearch conn.query error', err);
+                    conn.release();
+                    done(false);
+                }else{
+                    var users = [];
+                    async.eachSeries(rows, function(row, callback){
+                        var nickname = row.USER_NICKNAME;
+                        logger.info('db_user userSearch nickname', nickname);
+
+                        var sql = "select user.USER_NICKNAME, user.USER_PROFILE_URL from user where user.USER_NICKNAME=?";
+                        conn.query(sql, nickname, function (err, row) {
+                            if (err) {
+                                logger.error("/user/search error", err);
+                                done(false);
+                            } else {
+                                logger.info("/user/search info", row);
+                                var result = {"Info": row};
+                                users.push(result);
+                                callback();
+                            }
+                        });
+                    }, function (err) {
+                        if (err) {
+                            logger.error('db_user userSearch error ', err);
+                            conn.release();
+                            done(false);
+                        } else {
+                            logger.info('db_user userSearch success');
+                            conn.release();
+                            done(true, users);
+                        }
+                    });
+                }
+            });
+        }
     });
 }
