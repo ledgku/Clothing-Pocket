@@ -829,39 +829,125 @@ exports.regRecentItemCoordis = function (datas, done) {
                                 if (type == 'item') {
                                     var item_num = row.NUM;
                                     logger.info('db_mycloset regRecentItemCoordis item_num ', item_num);
-                                    var sql = "select ITEM_NUM, ITEM_URL from item where ITEM_NUM=?";
-                                    conn.query(sql, item_num, function(err, row){
-                                        if(err){
-                                            logger.error('db_mycloset regRecentItemCoordis error', err);
+                                    async.series([
+                                        function (callback) {
+                                            var sql = "select item.ITEM_NUM, item.ITEM_URL, item.ITEM_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from item join user on item.USER_NICKNAME = user.USER_NICKNAME and item.ITEM_NUM=?";
+                                            conn.query(sql, item_num, function (err, row) {
+                                                if (err) {
+                                                    logger.error('db_mycloset regRecentItemCoordis conn.query error 1/3', err);
+                                                    callback(err);
+                                                } else {
+                                                    logger.info('db_mycloset regRecentItemCoordis success 1/3');
+                                                    callback(null, row);
+                                                }
+                                            });
+                                        }, function (callback) {
+                                            var sql = "select count(*) cnt from good_item where ITEM_NUM=?";
+                                            conn.query(sql, item_num, function (err, row) {
+                                                if (err) {
+                                                    logger.error('db_mycloset regRecentItemCoordis conn.query error 2/3', err);
+                                                    callback(err);
+                                                } else {
+                                                    logger.info('db_mycloset regRecentItemCoordis success 2/3');
+                                                    callback(null, row);
+                                                }
+                                            });
+                                        }, function (callback) {
+                                            var sql = "select p.ITEM_PROP_CONTENT from item join (select item_prop.ITEM_NUM, item_prop_code.ITEM_PROP_CONTENT from item_prop join item_prop_code on item_prop.ITEM_PROP = item_prop_code.ITEM_PROP) p where item.ITEM_NUM = p.ITEM_NUM and item.ITEM_NUM=?";
+                                            conn.query(sql, item_num, function (err, row) {
+                                                if (err) {
+                                                    logger.error('db_mycloset regRecentItemCoordis conn.query error 3/3', err);
+                                                    callback(err);
+                                                } else {
+                                                    logger.info('db_mycloset regRecentItemCoordis success 3/3');
+                                                    callback(null, row);
+                                                }
+                                            });
+                                        }
+                                    ], function (err, results) {
+                                        if (err) {
                                             callback(err);
-                                        }else{
-                                            logger.info('db_mycloset regRecentItemCoordis row', row);
-                                            callback(null, row);
+                                        } else {
+                                            callback(null, 'item', results);
                                         }
                                     });
                                 } else if (type = 'coordi') {
                                     var coordi_num = row.NUM;
                                     logger.info('db_mycloset regRecentItemCoordis coordi_num ', coordi_num);
-                                    var sql = "select CD_NUM, CD_URL from coordi where CD_NUM=?";
-                                    conn.query(sql, coordi_num, function(err, row){
+                                    async.series([
+                                        function (callback) {
+                                            var sql = "select coordi.CD_NUM, coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
+                                            conn.query(sql, coordi_num, function(err, row){
+                                                if(err){
+                                                    logger.error('db_mycloset regRecentItemCoordis conn.query error 1/4', err);
+                                                    callback(err);
+                                                }else{
+                                                    logger.info('db_mycloset regRecentItemCoordis success 1/4');
+                                                    callback(null, row);
+                                                }
+                                            });
+                                        }, function (callback){
+                                            var sql = "select count(*) good_cnt from good_coordi where CD_NUM=?";
+                                            conn.query(sql, coordi_num, function(err, row){
+                                                if(err){
+                                                    logger.error('db_mycloset regRecentItemCoordis conn.query error 2/4', err);
+                                                    callback(err);
+                                                } else{
+                                                    logger.info('db_mycloset regRecentItemCoordis success 2/4');
+                                                    callback(null, row);
+                                                }
+                                            });
+                                        }, function (callback){
+                                            var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
+                                            conn.query(sql, coordi_num, function(err, row){
+                                                if(err){
+                                                    logger.error('db_mycloset regRecentItemCoordis conn.query error 3/4', err);
+                                                    callback(err);
+                                                } else{
+                                                    logger.info('db_mycloset regRecentItemCoordis success 3/4');
+                                                    callback(null, row);
+                                                }
+                                            });
+                                        }, function (callback){
+                                            var sql = "select p.COORDI_PROP_CONTENT from coordi join (select coordi_prop.CD_NUM, coordi_prop_code.COORDI_PROP_CONTENT from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP) p where coordi.CD_NUM = p.CD_NUM and coordi.CD_NUM=?";
+                                            conn.query(sql, coordi_num, function(err, row){
+                                                if(err){
+                                                    logger.error('db_mycloset regRecentItemCoordis conn.query error 4/4', err);
+                                                    callback(err);
+                                                } else{
+                                                    logger.info('db_mycloset regRecentItemCoordis success 4/4');
+                                                    callback(null, row);
+                                                }
+                                            });
+                                        }
+                                    ], function (err, results) {
                                         if(err){
-                                            logger.error('db_mycloset regRecentItemCoordis error', err);
                                             callback(err);
                                         }else{
-                                            logger.info('db_mycloset regRecentItemCoordis row', row);
-                                            callback(null, row);
+                                            callback(null, 'coordi', results);
                                         }
                                     });
                                 }
                             }
-                        ], function (err, row) {
+                        ], function (err, clothes, results) {
                             if(err){
                                 logger.error('db_mycloset regRecentItemCoordis error ', err);
                                 callback();
                             }else{
                                 logger.info('db_mycloset regRecentItemCoordis success');
-                                clothe.push(row);
-                                callback();
+                                if(clothes=='item'){
+                                    var itemArr = results[0].concat(results[1]);
+                                    var itemInfo = merge(itemArr[0], itemArr[1]);
+                                    var result = {"Info": itemInfo, "ItemProp": results[2]};
+                                    clothe.push(result);
+                                    callback();
+                                }else{
+                                    var coordiArr = results[0].concat(results[1]).concat(results[2]);
+                                    var coordiInfo = merge(coordiArr[0], coordiArr[1], coordiArr[2]);
+                                    var result = {"Info": coordiInfo, "CoordiProp": results[3]};
+                                    clothe.push(result);
+                                    callback();
+                                }
                             }
                         });
                     }, function(err){
