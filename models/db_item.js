@@ -286,7 +286,7 @@ exports.good = function (datas, done) {
                             if (err) {
                                 callback(err, "good_itemDeleteError");
                             } else {
-                                callback(null, "ok");
+                                callback(null, true, 'down');
                             }
                         });
                     } else {
@@ -296,18 +296,24 @@ exports.good = function (datas, done) {
                             if (err) {
                                 callback(err, "good_itemInsertError");
                             } else {
-                                callback(null, "ok");
+                                callback(null, true, 'up');
                             }
                         });
                     }
                 }
-            ], function (err, Msg) {
-                if (Msg == "ok") {
-                    logger.info("좋아요 변경 성공");
-                    conn.release();
-                    done(0, true);
+            ], function (err, success, stat) {
+                if (success) {
+                    if(stat=='up'){
+                        logger.info("/item/good up");
+                        conn.release();
+                        done(0, true, 'up');
+                    }else if(stat=='down'){
+                        logger.info("/item/good down");
+                        conn.release();
+                        done(0, true, 'down');
+                    }
                 } else {
-                    logger.error('err ', Msg);
+                    logger.error('db_item good error');
                     conn.release();
                     done(2, false);
                 }

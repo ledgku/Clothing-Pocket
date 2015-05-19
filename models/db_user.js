@@ -413,3 +413,8 @@ exports.userSearch = function (data, done) {
         }
     });
 }
+
+exports.userWeatherInfo = function (datas, done) {
+    logger.info('db_user userSearch datas ', datas);
+
+}

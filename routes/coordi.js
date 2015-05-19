@@ -158,9 +158,13 @@ router.post('/good', function (req, res, next) {
         logger.error('/item/good nicknameNull');
         res.json({"Result":"nicknameNull"});
     }else{
-        db_coordi.good(datas, function(flag, success){
+        db_coordi.good(datas, function(flag, success, stat){
             if(success){
-                res.json({"Result": "ok"});
+                if(stat=='up'){
+                    res.json({"Result": "up"});
+                }else{
+                    res.json({"Result": "down"});
+                }
             }else{
                 if(flag==0){
                     logger.error('db_coordi.good pool.getConnection Error');

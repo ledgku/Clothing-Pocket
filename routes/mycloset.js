@@ -201,79 +201,60 @@ router.post('/both/reg/recent', function (req, res, next) {
 });
 
 router.post('/coordi/today', function (req, res, next) {
-    res.json([
-        {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "nickname": "tester",
-            "good_num": "50",
-            "reply_num": "100",
-            "prop1": "학교",
-            "prop2": "흐림",
-            "prop3": "따듯한",
-            "description": "내가 제일 좋아하는 옷"
+    logger.info('req.body.datas ', req.body.datas);
+    logger.info('req.session.nickname', req.session.nickname);
+
+    var nickname = req.session.nickname;
+    var datas = JSON.parse(req.body.datas).weather.hourly[0];
+    var windSpeed = datas.wind.wspd * 3.6;
+    var weatherCode = datas.sky.code.substring(5,7);
+    var temperature = (datas.temperature.tmax-datas.temperature.tmin)/2;
+    var feelTemp = 13.12+0.6215*temperature-11.37*Math.pow(windSpeed, 0.16)+0.3965*Math.pow(windSpeed, 0.16)*temperature;
+    var datas = [];
+
+    async.series([
+        function(callback){
+            if(feelTemp>30){
+                callback(null, 'ctp0');
+            }else if(feelTemp>20){
+                callback(null, 'ctp1');
+            }else if(feelTemp>10){
+                callback(null, 'ctp2');
+            }else{
+                callback(null, 'ctp3');
+            }
+        }, function(callback){
+            if(weatherCode=='01' || weatherCode=='02' || weatherCode=='03'){
+                callback(null, 'cwp0');
+            }else if(weatherCode=='07' || weatherCode=='11'){
+                callback(null, 'cwp1');
+            }else if(weatherCode=='04' || weatherCode=='06' || weatherCode=='08' || weatherCode=='10' || weatherCode=='12' || weatherCode=='14'){
+                callback(null, 'cwp2');
+            }else{
+                callback(null, 'cwp3');
+            }
         }
-    ]);
+    ], function(err, result){
+        if(err){
+            logger.error('/mycloset/coordi/today error', err);
+            res.json({"Result":"fail"});
+        }else{
+            logger.info('/mycloset/coordi/today success');
+            datas=[nickname, result[0], result[1]];
+        }
+    });
+
+    db_mycloset.todaysCoordi(datas, function(success, coordis){
+        if(success){
+            if (success) {
+                logger.info('/mycloset/coordi/today success');
+                res.json({"todaysCoordis": coordis});
+            } else {
+                logger.info('/mycloset/coordi/today fail');
+                res.json({"Result": "fail"});
+            }
+        }
+    });
 });
 
 module.exports = router;

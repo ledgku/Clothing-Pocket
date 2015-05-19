@@ -289,7 +289,7 @@ exports.good = function (datas, done) {
                             if(err){
                                 callback(err, "good_coordiDeleteError");
                             }else{
-                                callback(null, "ok");
+                                callback(null, true, 'down');
                             }
                         });
                     }else{
@@ -299,18 +299,24 @@ exports.good = function (datas, done) {
                             if(err){
                                 callback(err, "good_coordiInsertError");
                             }else{
-                                callback(null, "ok");
+                                callback(null, true, 'up');
                             }
                         });
                     }
                 }
-            ],function(err, Msg){
-                if(Msg=="ok"){
-                    logger.info("좋아요 변경 성공");
-                    conn.release();
-                    done(0, true);
-                }else{
-                    logger.error('err ', Msg);
+            ],function(err, success, stat){
+                if (success) {
+                    if(stat=='up'){
+                        logger.info("/coordi/good up");
+                        conn.release();
+                        done(0, true, 'up');
+                    }else if(stat=='down'){
+                        logger.info("/coordi/good down");
+                        conn.release();
+                        done(0, true, 'down');
+                    }
+                } else {
+                    logger.error('db_coordi good error');
                     conn.release();
                     done(2, false);
                 }

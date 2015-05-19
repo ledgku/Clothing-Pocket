@@ -975,3 +975,102 @@ exports.recentWearCoordi = function (data, done) {
         }
     });
 }
+
+exports.todaysCoordi = function (datas, done) {
+    logger.info('db_mycloset todaysCoordi datas ', datas);
+    var nickname = datas[0];
+    var tempCode = datas[1];
+    var weatherCode = datas[2];
+    var datas = [nickname, tempCode, weatherCode];
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(false);
+        } else {
+            var sql = "select c.CD_NUM from (select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=?) c join (select a.CD_NUM from coordi_prop a join (select CD_NUM from coordi_prop where COORDI_PROP=?) b on a.CD_NUM = b.CD_NUM where a.COORDI_PROP=?) d on c.CD_NUM = d.CD_NUM";
+            conn.query(sql, datas, function (err, rows) {
+                if (err) {
+                    logger.error('db_mycloset todaysCoordi conn.query error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    var coordis = [];
+                    async.eachSeries(rows, function (row, callback) {
+                        var coordi_num = row.CD_NUM;
+                        logger.info('db_mycloset todaysCoordi coordi_num', coordi_num);
+                        async.series([
+                            function (callback) {
+                                var sql = "select coordi.CD_NUM, coordi.CD_URL, coordi.CD_DESCRIPTION, user.USER_NICKNAME, user.USER_PROFILE_URL from coordi join user on coordi.USER_NICKNAME = user.USER_NICKNAME and coordi.CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('todaysCoordi conn.query error 1/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('todaysCoordi success 1/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select count(*) good_cnt from good_coordi where CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('todaysCoordi conn.query error 2/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('todaysCoordi success 2/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select count(*) reply_cnt from coordi_reply where CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('todaysCoordi detail conn.query error 3/4', err);
+                                        callback(err);
+                                    } else {
+                                        logger.info('todaysCoordi detail success 3/4');
+                                        callback(null, row);
+                                    }
+                                });
+                            }, function (callback) {
+                                var sql = "select p.COORDI_PROP_CONTENT from coordi join (select coordi_prop.CD_NUM, coordi_prop_code.COORDI_PROP_CONTENT from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP) as p where coordi.CD_NUM = p.CD_NUM and coordi.CD_NUM=?";
+                                conn.query(sql, coordi_num, function (err, row) {
+                                    if (err) {
+                                        logger.error('todaysCoordi conn.query error 4/4');
+                                        callback(err);
+                                    } else {
+                                        logger.info('todaysCoordi success 4/4', row);
+                                        callback(null, row);
+                                    }
+                                });
+                            }
+                        ], function (err, results) {
+                            if (err) {
+                                logger.error("/mycloset/coordi/today error", err);
+                                done(false);
+                            } else {
+                                logger.info("/mycloset/coordi/today info");
+                                var coordiArr = results[0].concat(results[1]).concat(results[2]);
+                                var coordiInfo = merge(coordiArr[0], coordiArr[1], coordiArr[2]);
+                                var result = {"Info": coordiInfo, "coordiProp": results[3]};
+                                coordis.push(result);
+                                callback();
+                            }
+                        });
+                    }, function (err) {
+                        if (err) {
+                            logger.error('db_mycloset todaysCoordi error ', err);
+                            conn.release();
+                            done(false);
+                        } else {
+                            logger.info('db_mycloset todaysCoordi success');
+                            conn.release();
+                            done(true, coordis);
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
