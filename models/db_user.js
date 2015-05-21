@@ -133,16 +133,16 @@ exports.fb = function (datas, done) {
                         } else if (success) {
                             logger.info('db_user fb login data');
                             var sql = "update user set user.USER_LASTLOGIN=now(), user.USER_PUSHKEY=? where user.USER_NICKNAME=?";
-                            conn.query(sql, [push_id, data], function(err, row){
-                               if(err){
-                                   logger.error('db_user fb login error', err);
-                                   conn.release();
-                                   done(1, false);
-                               } else{
-                                   logger.info('db_user fb login success');
-                                   conn.release();
-                                   done(0, true, data);
-                               }
+                            conn.query(sql, [push_id, data], function (err, row) {
+                                if (err) {
+                                    logger.error('db_user fb login error', err);
+                                    conn.release();
+                                    done(1, false);
+                                } else {
+                                    logger.info('db_user fb login success');
+                                    conn.release();
+                                    done(0, true, data);
+                                }
                             });
                         } else {
                             logger.info('db_user fb fail data');
@@ -358,11 +358,11 @@ exports.changepasswd = function (datas, done) {
                 }
             }
         ], function (err, success) {
-            if(err){
+            if (err) {
                 logger.error('db_user changepasswd error ', err);
                 conn.release();
                 done(false);
-            }else {
+            } else {
                 if (success) {
                     logger.info('db_user changepasswd success');
                     conn.release();
@@ -380,19 +380,19 @@ exports.changepasswd = function (datas, done) {
 exports.userSearch = function (data, done) {
     logger.info('db_user userSearch data ', data);
     pool.getConnection(function (err, conn) {
-        if(err){
+        if (err) {
             logger.error('getConnection error', err);
             done(false);
-        }else{
+        } else {
             var sql = "select USER_NICKNAME from user where USER_NICKNAME like ?";
-            conn.query(sql, data, function(err, rows){
-                if(err){
+            conn.query(sql, data, function (err, rows) {
+                if (err) {
                     logger.error('db_user userSearch conn.query error', err);
                     conn.release();
                     done(false);
-                }else{
+                } else {
                     var users = [];
-                    async.eachSeries(rows, function(row, callback){
+                    async.eachSeries(rows, function (row, callback) {
                         var nickname = row.USER_NICKNAME;
                         logger.info('db_user userSearch nickname', nickname);
 
@@ -425,7 +425,203 @@ exports.userSearch = function (data, done) {
     });
 }
 
-exports.userWeatherInfo = function (datas, done) {
-    logger.info('db_user userSearch datas ', datas);
+exports.personalAlarm = function (nickname, done) {
+    logger.info('db_user personalAlarm data ', nickname);
 
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('db_user personalAlarm error', err);
+            done(false);
+        } else {
+            var sql = "select USER_ALARM_FLAG from user where USER_NICKNAME=?";
+            conn.query(sql, nickname, function (err, row) {
+                if (err) {
+                    logger.error('db_user personalAlarm error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    logger.info('db_user personalAlarm success');
+                    if (row[0].USER_ALARM_FLAG == 1) {
+                        conn.release();
+                        done(true, 'on');
+                    } else {
+                        conn.release();
+                        done(true, 'off');
+                    }
+                }
+            });
+        }
+    });
+}
+
+exports.alarm = function (nickname, done) {
+    logger.info('db_user alarm data ', nickname);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('db_user alarm error', err);
+            done(false);
+        } else {
+            var sql = "select ALARM_NUM from alarm where USER_NICKNAME=? order by ALARM_REGDATE desc limit 15";
+            conn.query(sql, nickname, function (err, rows) {
+                if (err) {
+                    logger.error('db_user alarm error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    if (rows.length==0) {
+                        logger.info('db_user alarm null');
+                        conn.release();
+                        done(true, 'null');
+                    } else {
+                        logger.info('db_user alarm success', rows.length);
+                        var alarms = [];
+                        async.eachSeries(rows, function(row, callback){
+                            var alarm_num = row.ALARM_NUM;
+                            logger.info('alarm_num', alarm_num);
+                            var sql = "select ALARM_NUM, ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, IMG_URL, USER_PROFILE_URL from alarm where ALARM_NUM=?";
+                            conn.query(sql, alarm_num, function(err, rows){
+                                if(err){
+                                    callback(err);
+                                }else{
+                                    alarms.push(rows);
+                                    callback(null);
+                                }
+                            });
+                        }, function(err){
+                            if(err){
+                                logger.error('db_user alarm error', err);
+                                conn.release();
+                                done(false);
+                            }else{
+                                logger.info('db_user alarm success');
+                                conn.release();
+                                done(true, alarms);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    });
+}
+
+exports.alarmDel = function (datas, done) {
+    logger.info('db_user alarm del datas ', datas);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('db_user alarm error', err);
+            done(false);
+        } else {
+            var sql = "delete from alarm where USER_NICKNAME=? and ALARM_NUM=?";
+            conn.query(sql, datas, function(err, row){
+                if(err){
+                    logger.error('db_user alarmDel error', err);
+                    conn.release();
+                    done(false);
+                }else{
+                    logger.info('db_user alarmDel success');
+                    conn.release();
+                    done(true);
+                }
+            });
+        }
+    });
+}
+
+exports.alarmDelAll = function (nickname, done) {
+    logger.info('db_user alarm del all nickname ', nickname);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('db_user alarm del all error', err);
+            done(false);
+        } else {
+            var sql = "delete from alarm where USER_NICKNAME=?";
+            conn.query(sql, nickname, function(err, row){
+                if(err){
+                    logger.error('db_user alarmDelAll error', err);
+                    conn.release();
+                    done(false);
+                }else{
+                    logger.info('db_user alarmDelAll success');
+                    conn.release();
+                    done(true);
+                }
+            });
+        }
+    });
+}
+
+exports.personalAlarmSubmit = function (nickname, done) {
+    logger.info('db_user personalAlarmSubmit nickname ', nickname);
+
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('db_user personalAlarmSubmit error', err);
+            done(false);
+        } else {
+            async.waterfall([
+                function(callback){
+                    var sql = "select USER_ALARM_FLAG from user where USER_NICKNAME=?";
+                    conn.query(sql, nickname, function(err, row){
+                       if(err){
+                           callback(err);
+                       } else{
+                           callback(null, row[0].USER_ALARM_FLAG);
+                       }
+                    });
+                }, function(flag, callback){
+                    if(flag==1){
+                        callback(null, 0);
+                    }else{
+                        callback(null, 1);
+                    }
+                }, function(flag, callback){
+                    var sql = "update user set USER_ALARM_FLAG=? where USER_NICKNAME=?";
+                    conn.query(sql, [flag, nickname], function(err, row){
+                       if(err){
+                           callback(err);
+                       } else{
+                           callback(null);
+                       }
+                    });
+                }
+            ],function(err){
+                if(err){
+                    logger.error('db_user personalAlarmSubmit error', err);
+                    conn.release();
+                    done(false);
+                }else{
+                    logger.info('db_user personalAlarmSubmit success');
+                    conn.release();
+                    done(true);
+                }
+            });
+        }
+    });
+}
+
+exports.profileUpdate = function (datas, done) {
+    logger.info('datas', datas);
+    pool.getConnection(function (err, conn) {
+        if (err) {
+            logger.error('getConnection error', err);
+            done(0, false);
+        } else {
+            var sql = "update user set USER_PROFILE_URL=? where USER_NICKNAME=?";
+            conn.query(sql, datas, function(err, row){
+               if(err){
+                   logger.error('db_user profileUpdate error', err);
+                   conn.release();
+                   done(false);
+               } else{
+                   logger.info('db_user profileUpdate success');
+                   conn.release();
+                   done(true);
+               }
+            });
+        }
+    });
 }

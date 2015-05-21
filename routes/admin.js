@@ -18,7 +18,7 @@ router.post('/item/add', function (req, res, next) {
     logger.info('req.files', req.files);
 
     var item = req.files;
-    var filename = req.files.file.name;
+    var filename = item.file.name;
     var filePath = 'http://52.68.143.198/item/img/' + filename;
     var nickname = req.body.nickname;
     var datas = [filePath, nickname];

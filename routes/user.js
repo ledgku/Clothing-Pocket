@@ -3,6 +3,7 @@ var router = express.Router();
 var fs = require('fs');
 var db_user = require('../models/db_user.js');
 var async = require('async');
+var multer = require('multer');
 var logger = require('../logger');
 
 router.get('/img/:IMG_NAME', function (req, res) {
@@ -11,6 +12,40 @@ router.get('/img/:IMG_NAME', function (req, res) {
     res.writeHead(200, {'Content-Type': 'image/png'});
     res.end(img, 'binary');
 });
+
+router.use(multer({
+    dest: './public/images/profile',
+    rename: function (fieldname, filename) {
+        return filename.toLowerCase() + Date.now();
+    }
+}));
+
+router.post('/profile/update', function (req, res, next) {
+    logger.info('req.files', req.files);
+
+    var profile = req.files;
+    var filename = profile.file.name;
+    var filePath = 'http://52.68.143.198/user/img/' + filename;
+    var nickname = req.session.nickname;
+    var datas = [filePath, nickname];
+
+    if (JSON.stringify(profile) == '{}') {
+        logger.info('modifiedItemUploadFileNull');
+        res.json({"result": 'itemUploadFileNull'});
+    } else {
+        logger.info('modifiedItemUploadOK');
+        db_user.profileUpdate(datas, function (success) {
+            if (success) {
+                logger.info('/admin/add success');
+                res.json({"Result": "ok"});
+            } else {
+                logger.info('/admin/add fail');
+                res.json({"Result": "fail"});
+            }
+        });
+    }
+});
+
 
 //일반 회원 가입
 router.post('/join', function (req, res, next) {
@@ -231,7 +266,7 @@ router.post('/profile/add', function (req, res, next) {
 
 router.post('/search', function (req, res, next) {
     logger.info('req.body ', req.body.searchWord);
-    var word = req.body.searchWord+'%';
+    var word = req.body.searchWord + '%';
 
     if (!word) {
         logger.error('/user/search searchWordNull');
@@ -243,39 +278,107 @@ router.post('/search', function (req, res, next) {
                 res.json({"searchUserList": datas});
             } else {
                 logger.error('/user/search fail');
-                res.json({"Result":"fail"});
+                res.json({"Result": "fail"});
+            }
+        });
+    }
+});
+
+router.post('/alarm', function (req, res, next) {
+    var nickname = req.session.nickname;
+
+    if (!nickname) {
+        logger.error('/user/alarm nicknameNull');
+        res.json({"Result": "nicknameNull"});
+    } else {
+        db_user.alarm(nickname, function (success, alarms) {
+            if (success) {
+                logger.info('/user/alarm success');
+                res.json({"alarm": alarms});
+            } else {
+                logger.info('/user/alarm fail');
+                res.json({"Result": "fail"});
+            }
+        });
+    }
+});
+
+router.post('/alarm/del', function (req, res, next) {
+    var alarm_num = req.body.alarmNum;
+    var nickname = req.session.nickname;
+    var datas = [nickname, alarm_num];
+
+    if (!datas) {
+        logger.error('/user/alarm/del dataNull');
+        res.json({"Result": "dataNull"});
+    } else {
+        db_user.alarmDel(datas, function (success) {
+            if (success) {
+                logger.info('/user/alarm/del success');
+                res.json({"Result": "ok"});
+            } else {
+                logger.info('/user/alarm/del fail');
+                res.json({"Result": "fail"});
+            }
+        });
+    }
+});
+
+router.post('/alarm/del/all', function (req, res, next) {
+    var nickname = req.session.nickname;
+
+    if (!nickname) {
+        logger.error('/user/alarm/del nicknameNull');
+        res.json({"Result": "nicknameNull"});
+    } else {
+        db_user.alarmDelAll(nickname, function (success) {
+            if (success) {
+                logger.info('/user/alarm/del/all success');
+                res.json({"Result": "ok"});
+            } else {
+                logger.info('/user/alarm/del/all fail');
+                res.json({"Result": "fail"});
+            }
+        });
+    }
+});
+
+router.post('/personal/submit', function (req, res, next) {
+    var nickname = req.session.nickname;
+
+    if (!nickname) {
+        logger.error('/user/personal/submit nicknameNull');
+        res.json({"Result": "nicknameNull"});
+    } else {
+        db_user.personalAlarmSubmit(nickname, function (success) {
+            if (success) {
+                logger.info('/user/personal/submit success');
+                res.json({"Result": "ok"});
+            } else {
+                logger.info('/user/personal/submit fail');
+                res.json({"Result": "fail"});
             }
         });
     }
 });
 
 router.post('/personal', function (req, res, next) {
-    res.json({
-        "on_off": "1",
-        "main_notice": "1",
-        "today_coordi": "1",
-        "time": "2",
-        "good_reply_follow": "1"
-    });
-});
+    var nickname = req.session.nickname;
 
-router.post('/personal/submit', function (req, res, next) {
-    res.json({"result": "success"});
-});
-
-router.post('/alarm', function (req, res, next) {
-    res.json([
-        {
-            "profile_url": "http://52.68.143.198:3000/user/img/profile",
-            "content": "nam님이 회원님의 옷장을 팔로우 했습니다."
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "content": "수선이 완료되었습니다."
-        }, {
-            "img_url": "http://52.68.143.198:3000/coordi/img/coordi",
-            "content": "수선이 중입니다."
-        }
-    ]);
+    if (!nickname) {
+        logger.error('/user/personal nicknameNull');
+        res.json({"Result": "nicknameNull"});
+    } else {
+        db_user.personalAlarm(nickname, function (success, flag) {
+            if (success) {
+                logger.info('/user/personal success');
+                res.json({"alarmStatus": flag});
+            } else {
+                logger.info('/user/personal fail');
+                res.json({"Result": "fail"});
+            }
+        });
+    }
 });
 
 module.exports = router;
