@@ -28,10 +28,12 @@ router.post('/item/add', function (req, res, next) {
         res.json({"result": 'itemUploadFileNull'});
     } else {
         logger.info('modifiedItemUploadOK');
-        db_admin.add(datas, function (success, contents, pushKey) {
+        db_admin.add(datas, function (success, flag, contents, pushKey) {
             if (success) {
                 logger.info('/admin/add success');
-                sendPush.send(contents, pushKey);
+                if(flag==1){
+                    sendPush.send(contents, pushKey);
+                }
                 res.json({"Result": "ok"});
             } else {
                 logger.info('/admin/add fail');

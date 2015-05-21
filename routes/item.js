@@ -165,10 +165,10 @@ router.post('/good', function (req, res, next) {
         logger.error('/item/good nicknameNull');
         res.json({"Result": "nicknameNull"});
     } else {
-        db_item.good(datas, function (flag, success, stat, contents, pushKey) {
+        db_item.good(datas, function (flag, success, stat, flag, contents, pushKey) {
             if (success) {
                 logger.info('/item/good success');
-                if(stat=='up'){
+                if(stat=='up' && flag==1){
                     sendPush.send(contents, pushKey);
                 }
                 res.json({"Result": stat});

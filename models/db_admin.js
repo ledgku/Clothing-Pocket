@@ -52,7 +52,7 @@ exports.add = function (datas, done) {
                     conn.release();
                     done(false);
                 } else {
-                    var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                    var sql = "select USER_PUSHKEY, USER_ALARM_FLAG from user where USER_NICKNAME=?";
                     conn.query(sql, nickname, function (err, row) {
                         if (err) {
                             logger.error('db_admin add error', err);
@@ -61,7 +61,11 @@ exports.add = function (datas, done) {
                         } else {
                             logger.info('db_admin add success', row[0].USER_PUSHKEY);
                             conn.release();
-                            done(true, contents, row[0].USER_PUSHKEY);
+                            if(row[0].USER_ALARM_FLAG==1){
+                                done(true, 1, contents, row[0].USER_PUSHKEY);
+                            }else{
+                                done(true, 0);
+                            }
                         }
                     });
                 }

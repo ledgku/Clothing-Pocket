@@ -70,7 +70,7 @@ exports.follow = function (datas, done) {
                                       conn.release();
                                       done(false);
                                   }else{
-                                      var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                                      var sql = "select USER_PUSHKEY, USER_ALARM_FLAG from user where USER_NICKNAME=?";
                                       conn.query(sql, datas[0], function(err, row){
                                          if(err){
                                              logger.error('db_follow follow error', err);
@@ -79,7 +79,7 @@ exports.follow = function (datas, done) {
                                          }else{
                                              logger.info('db_follow follow success', row);
                                              conn.release();
-                                             done(true, contents, stat, row[0].USER_PUSHKEY);
+                                             done(true, contents, stat, row[0].USER_ALARM_FLAG, row[0].USER_PUSHKEY);
                                          }
                                       });
                                   }

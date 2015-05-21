@@ -344,14 +344,14 @@ exports.good = function (datas, done) {
                 if (success) {
                     logger.info("/coordi/good stat nickname", stat, nickname);
 
-                    var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                    var sql = "select USER_PUSHKEY, USER_ALARM_FLAG from user where USER_NICKNAME=?";
                     conn.query(sql, nickname, function(err, row){
                         if(err){
                             conn.release();
                             done(1, false);
                         }else{
                             conn.release();
-                            done(0, true, stat, contents, row[0].USER_PUSHKEY);
+                            done(0, true, stat, row[0].USER_ALARM_FLAG, contents, row[0].USER_PUSHKEY);
                         }
                     });
                 } else {
@@ -582,14 +582,14 @@ exports.replyReg = function (datas, done) {
                                         conn.release();
                                         done(false);
                                     }else{
-                                        var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                                        var sql = "select USER_PUSHKEY, USER_ALARM_FLAG from user where USER_NICKNAME=?";
                                         conn.query(sql, rows[0], function(err, row){
                                             if(err){
                                                 conn.release();
                                                 done(false);
                                             }else{
                                                 conn.release();
-                                                done(true, contents, row[0].USER_PUSHKEY);
+                                                done(true, contents, row[0].USER_ALARM_FLAG, row[0].USER_PUSHKEY);
                                             }
                                         })
                                     }

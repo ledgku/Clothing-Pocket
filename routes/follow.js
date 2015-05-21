@@ -16,10 +16,10 @@ router.post('/', function(req, res, next) {
         logger.error('/follow nicknameNull');
         res.json({"Result":"nicknameNull"});
     }else{
-        db_follow.follow(datas, function(success, contents, stat, pushKey){
+        db_follow.follow(datas, function(success, contents, stat, flag, pushKey){
             if(success){
                 logger.info('/follow success');
-                if(stat=='up') {
+                if(stat=='up' && flag==1) {
                     sendPush.send(contents, pushKey);
                 }
                 res.json({"Result": "ok"});

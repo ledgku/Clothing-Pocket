@@ -341,14 +341,14 @@ exports.good = function (datas, done) {
                 if (success) {
                     logger.info("/item/good stat nickname", stat, nickname);
 
-                    var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                    var sql = "select USER_PUSHKEY, USER_ALARM_FLAG from user where USER_NICKNAME=?";
                     conn.query(sql, nickname, function(err, row){
                         if(err){
                             conn.release();
                             done(1, false);
                         }else{
                             conn.release();
-                            done(0, true, stat, contents, row[0].USER_PUSHKEY);
+                            done(0, true, stat, row[0].USER_ALARM_FLAG, contents, row[0].USER_PUSHKEY);
                         }
                     });
                 } else {

@@ -159,10 +159,10 @@ router.post('/good', function (req, res, next) {
         logger.error('/item/good nicknameNull');
         res.json({"Result": "nicknameNull"});
     } else {
-        db_coordi.good(datas, function (flag, success, stat, contents, pushKey) {
+        db_coordi.good(datas, function (flag, success, stat, flag, contents, pushKey) {
             if (success) {
                 logger.info('/coordi/good success', stat);
-                if (stat == 'up') {
+                if (stat == 'up' && flag==1) {
                     sendPush.send(contents, pushKey);
                 }
                 res.json({"Result": stat});
@@ -270,10 +270,12 @@ router.post('/reply/reg', function (req, res, next) {
         logger.info('nullInputExist');
         res.json({"Result": "nullInputExist"});
     } else {
-        db_coordi.replyReg(datas, function (success, contents, pushKey) {
+        db_coordi.replyReg(datas, function (success, contents, flag, pushKey) {
             if (success) {
                 logger.info('/reply/reg success');
-                sendPush.send(contents, pushKey);
+                if(flag==1){
+                    sendPush.send(contents, pushKey);
+                }
                 res.json({"Result": "ok"});
             } else {
                 logger.error('/reply/reg fail');
