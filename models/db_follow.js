@@ -8,18 +8,19 @@ var async = require('async');
 
 exports.follow = function (datas, done) {
     logger.info('datas', datas);
+    var contents = datas[1] + '님이 회원님을 팔로우 했습니다.';
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
-            done(0, false);
+            done(false);
         } else {
             async.waterfall([
                 function (callback) {
                     var sql = "select count(*) cnt from follow where USER_NICKNAME=? and USER_NICKNAME2=?";
                     conn.query(sql, datas, function (err, row) {
                         if (err) {
-                            callback(err, 'db_follow good conn.query error');
+                            callback(err);
                         } else {
                             callback(null, row[0].cnt);
                         }
@@ -30,9 +31,9 @@ exports.follow = function (datas, done) {
                         var sql = "delete from follow where USER_NICKNAME=? and USER_NICKNAME2=?";
                         conn.query(sql, datas, function (err, row) {
                             if (err) {
-                                callback(err, "db_follow DeleteError");
+                                callback(err);
                             } else {
-                                callback(null, "ok");
+                                callback(null, "down");
                             }
                         });
                     } else {
@@ -40,22 +41,54 @@ exports.follow = function (datas, done) {
                         var sql = "insert into follow(USER_NICKNAME, USER_NICKNAME2) values(?,?)";
                         conn.query(sql, datas, function (err, row) {
                             if (err) {
-                                callback(err, "db_follow InsertError");
+                                callback(err);
                             } else {
-                                callback(null, "ok");
+                                callback(null, "up");
                             }
                         });
                     }
                 }
-            ], function (err, Msg) {
-                if (Msg == "ok") {
-                    logger.info("follow change success");
-                    conn.release();
-                    done(true);
-                } else {
-                    logger.error('err ', Msg);
+            ], function (err, stat) {
+                if(err){
+                    logger.error('db_follow follow error', err);
                     conn.release();
                     done(false);
+                }else{
+                    if(stat=="up"){
+                        var sql = "select USER_PROFILE_URL from user where USER_NICKNAME=?";
+                        conn.query(sql, datas[1], function(err, row){
+                           if(err){
+                               logger.error('db_follow follow error', err);
+                               conn.release();
+                               done(false);
+                           }else{
+                               var user_profile_url = row[0].USER_PROFILE_URL;
+                               var sql = "insert into alarm(ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, ALARM_REGDATE, USER_PROFILE_URL) values(4,?,?,now(),?)";
+                               conn.query(sql, [datas[0], contents, user_profile_url], function(err, row){
+                                  if(err){
+                                      logger.error('db_follow follow error', err);
+                                      conn.release();
+                                      done(false);
+                                  }else{
+                                      var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                                      conn.query(sql, datas[0], function(err, row){
+                                         if(err){
+                                             logger.error('db_follow follow error', err);
+                                             conn.release();
+                                             done(false);
+                                         }else{
+                                             logger.info('db_follow follow success', row);
+                                             conn.release();
+                                             done(true, contents, stat, row[0].USER_PUSHKEY);
+                                         }
+                                      });
+                                  }
+                               });
+                           }
+                        });
+                    }else{
+                        done(true, contents, stat);
+                    }
                 }
             });
         }

@@ -265,6 +265,7 @@ exports.delete = function (data, done) {
 
 exports.good = function (datas, done) {
     logger.info('datas', datas);
+    var contents = datas[1] + '님이 회원님의 코디를 좋아합니다.';
 
     pool.getConnection(function(err, conn){
         if(err){
@@ -276,7 +277,7 @@ exports.good = function (datas, done) {
                     var sql = "select count(*) cnt from good_coordi where CD_NUM=? and USER_NICKNAME=?";
                     conn.query(sql, datas, function(err, row){
                         if(err){
-                            callback(err, 'db_item good conn.query error');
+                            callback(err);
                         }else{
                             callback(null, row[0].cnt);
                         }
@@ -287,9 +288,9 @@ exports.good = function (datas, done) {
                         var sql = "delete from good_coordi where CD_NUM=? and USER_NICKNAME=?";
                         conn.query(sql, datas, function(err, row){
                             if(err){
-                                callback(err, "good_coordiDeleteError");
+                                callback(err);
                             }else{
-                                callback(null, true, 'down');
+                                callback(null, 'down');
                             }
                         });
                     }else{
@@ -297,24 +298,62 @@ exports.good = function (datas, done) {
                         var sql = "insert into good_coordi values(?,?)";
                         conn.query(sql, datas, function(err, row){
                             if(err){
-                                callback(err, "good_coordiInsertError");
+                                callback(err);
                             }else{
-                                callback(null, true, 'up');
+                                callback(null, 'up');
                             }
                         });
                     }
+                }, function(stat, callback){
+                    var sql = "select CD_URL, USER_NICKNAME from coordi where CD_NUM=?";
+                    conn.query(sql, datas[0], function(err, row){
+                        if(err){
+                            callback(err);
+                        } else{
+                            var coordi_url = row[0].CD_URL;
+                            var user_nickname = row[0].USER_NICKNAME;
+                            if(!coordi_url || !user_nickname){
+                                callback(null, false);
+                            }else {
+                                var sql = "select USER_PROFILE_URL from user where USER_NICKNAME=?";
+                                conn.query(sql, user_nickname, function (err, row) {
+                                    if (err) {
+                                        callback(err);
+                                    } else {
+                                        var user_profile_url = row[0].USER_PROFILE_URL;
+                                        if(!user_profile_url){
+                                            callback(null, false);
+                                        }else {
+                                            var datas = [user_nickname, contents, coordi_url, user_profile_url];
+                                            var sql = "insert into alarm(ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, ALARM_REGDATE, IMG_URL, USER_PROFILE_URL) values(2,?,?,now(),?,?)";
+                                            conn.query(sql, datas, function(err, row){
+                                                if(err){
+                                                    callback(err);
+                                                } else{
+                                                    callback(null, true, stat, user_nickname);
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
                 }
-            ],function(err, success, stat){
+            ],function(err, success, stat, nickname){
                 if (success) {
-                    if(stat=='up'){
-                        logger.info("/coordi/good up");
-                        conn.release();
-                        done(0, true, 'up');
-                    }else if(stat=='down'){
-                        logger.info("/coordi/good down");
-                        conn.release();
-                        done(0, true, 'down');
-                    }
+                    logger.info("/coordi/good stat nickname", stat, nickname);
+
+                    var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                    conn.query(sql, nickname, function(err, row){
+                        if(err){
+                            conn.release();
+                            done(1, false);
+                        }else{
+                            conn.release();
+                            done(0, true, stat, contents, row[0].USER_PUSHKEY);
+                        }
+                    });
                 } else {
                     logger.error('db_coordi good error');
                     conn.release();
@@ -426,20 +465,35 @@ exports.modifyInfo = function (data, done) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select coordi_prop.COORDI_PROP from coordi_prop where coordi_prop.CD_NUM=?";
-            conn.query(sql, data, function (err, row) {
-                if (err) {
-                    logger.error('db_coordi modifyInfo conn.query error', err);
+            async.series([
+                function(callback){
+                    var sql = "select coordi_prop.COORDI_PROP from coordi_prop where coordi_prop.CD_NUM=?";
+                    conn.query(sql, data, function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null, row);
+                        }
+                    });
+                }, function(callback){
+                    var sql = "select CD_DESCRIPTION from coordi where CD_NUM=?";
+                    conn.query(sql, data, function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null, row);
+                        }
+                    });
+                }
+            ],function(err, row){
+                if(err){
+                    logger.error('db_coordi modifyInfo error', err);
                     conn.release();
                     done(false);
-                } else {
-                    if (row.length == 0) {
-                        conn.release();
-                        done(true, 'null');
-                    } else {
-                        conn.release();
-                        done(true, row);
-                    }
+                }else{
+                    logger.info('db_coordi modifyInfo success');
+                    conn.release();
+                    done(true, row);
                 }
             });
         }
@@ -476,6 +530,10 @@ exports.reply = function (data, done) {
 
 exports.replyReg = function (datas, done) {
     logger.info('db_coordi replyReg datas ', datas);
+    var contents = datas[1] + '님이 회원님의 코디에 댓글을 남겼습니다.';
+    var coordi_num = datas[0];
+    var nickname = datas[1];
+    var re_contents = datas[2];
 
     pool.getConnection(function(err, conn){
        if(err){
@@ -490,13 +548,55 @@ exports.replyReg = function (datas, done) {
                    done(false);
                }else{
                    if (row.affectedRows == 1) {
-                       conn.release();
-                       done(true);
-                   }else{
-                       conn.release();
-                       done(false);
+                       async.series([
+                           function(callback){
+                               var sql = "select USER_NICKNAME, CD_URL from coordi where CD_NUM=?";
+                               conn.query(sql, coordi_num, function(err, row){
+                                  if(err){
+                                      callback(err);
+                                  } else{
+                                      callback(null, row[0].USER_NICKNAME, row[0].CD_URL);
+                                  }
+                               });
+                           }, function(callback){
+                               var sql = "select USER_PROFILE_URL from user where USER_NICKNAME=?";
+                               conn.query(sql, nickname, function(err, row){
+                                  if(err){
+                                      callback(err);
+                                  }else{
+                                      callback(null, row[0].USER_PROFILE_URL);
+                                  }
+                               });
+                           }
+                       ], function(err, rows){
+                            if(err){
+                                logger.error('db_coordi reply reg error', err);
+                                conn.release();
+                                done(false);
+                            }else{
+                                rows = rows[0].concat(rows[1]);
+                                logger.info('db_coordi reply reg success', rows);
+                                var sql = "insert into alarm(ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, ALARM_REGDATE, IMG_URL, USER_PROFILE_URL) values(3,?,?,now(),?,?)";
+                                conn.query(sql, [rows[0], contents, rows[1], rows[2]], function(err, row){
+                                    if(err){
+                                        conn.release();
+                                        done(false);
+                                    }else{
+                                        var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                                        conn.query(sql, rows[0], function(err, row){
+                                            if(err){
+                                                conn.release();
+                                                done(false);
+                                            }else{
+                                                conn.release();
+                                                done(true, contents, row[0].USER_PUSHKEY);
+                                            }
+                                        })
+                                    }
+                                });
+                            }
+                       });
                    }
-
                }
            });
        }

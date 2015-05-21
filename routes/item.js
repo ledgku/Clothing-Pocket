@@ -6,6 +6,7 @@ var logger = require('../logger');
 var multer = require('multer');
 var merge = require('merge');
 var db_item = require('../models/db_item.js');
+var sendPush = require('../sendPush');
 
 router.get('/img/download/:IMG_NAME', function (req, res) {
     var imgName = req.params.IMG_NAME;
@@ -17,7 +18,7 @@ router.get('/img/download/:IMG_NAME', function (req, res) {
 router.get('/img/:IMG_NAME', function (req, res) {
     var imgName = req.params.IMG_NAME;
     var img = fs.readFileSync('./public/images/items/' + imgName);
-    res.writeHead(200, {'Content-Type': 'image/jpg'});
+    res.writeHead(200, {'Content-Type': 'image/png'});
     res.end(img, 'binary');
 });
 
@@ -77,21 +78,21 @@ router.post('/modify', function (req, res, next) {
                 logger.info('db_item.modifyDesc success');
                 datas.pop();
 
-                if(req.body.categoryProp){
+                if (req.body.categoryProp) {
                     datas.push(req.body.categoryProp);
                 }
-                if(req.body.seasonProp){
+                if (req.body.seasonProp) {
                     datas.push(req.body.seasonProp)
                 }
-                if(req.body.colorProp){
+                if (req.body.colorProp) {
                     datas.push(req.body.colorProp);
                 }
                 if (datas.length == 1) {
                     res.json({"Result": "ok"});
-                }else if(datas.length != 4){
+                } else if (datas.length != 4) {
                     logger.error("itemPropNumIsNot3");
-                    res.json({"Result":"itemPropNumIsNot3"});
-                }else {
+                    res.json({"Result": "itemPropNumIsNot3"});
+                } else {
                     db_item.modify(datas, function (flag, success) {
                         if (success) {
                             res.json({"Result": "ok"});
@@ -119,35 +120,29 @@ router.post('/modify', function (req, res, next) {
     }
 });
 
-router.post('/download', function (req, res, next) {
-    res.json({
-        "img_url": "http://52.68.143.198:3000/item/img/shirts"
-    });
-});
-
 router.post('/delete', function (req, res, next) {
     logger.info('req.body ', req.body);
 
     var item_num = req.body.itemNum;
 
-    if(!item_num){
+    if (!item_num) {
         logger.error('/item/delete itemNumNull');
-        res.json({"Result":"itemNumNull"});
-    }else{
-        db_item.delete(item_num, function(flag, success){
-            if(success){
+        res.json({"Result": "itemNumNull"});
+    } else {
+        db_item.delete(item_num, function (flag, success) {
+            if (success) {
                 res.json({"Result": "ok"});
-            }else{
-                if(flag==0){
+            } else {
+                if (flag == 0) {
                     logger.error('db_item.delete pool.getConnection Error');
                     res.json({"Result": "getConnectionError"});
-                }else if (flag == 1) {
+                } else if (flag == 1) {
                     logger.error('db_item.delete rollback error');
                     res.json({"Result": "rollbackError"});
-                }else if (flag ==2) {
+                } else if (flag == 2) {
                     logger.error('db_item.delete rollback');
                     res.json({"Result": "rollback"});
-                }else if (flag == 3){
+                } else if (flag == 3) {
                     logger.error('db_item.delete unlink error');
                     res.json({"Result": "unlinkError"});
                 }
@@ -163,28 +158,28 @@ router.post('/good', function (req, res, next) {
     var nickname = req.session.nickname;
     var datas = [item_num, nickname];
 
-    if(!item_num){
+    if (!item_num) {
         logger.error('/item/good itemNumNull');
-        res.json({"Result":"itemNumNull"});
-    }else if(!nickname){
+        res.json({"Result": "itemNumNull"});
+    } else if (!nickname) {
         logger.error('/item/good nicknameNull');
-        res.json({"Result":"nicknameNull"});
-    }else{
-        db_item.good(datas, function(flag, success, stat){
-            if(success){
+        res.json({"Result": "nicknameNull"});
+    } else {
+        db_item.good(datas, function (flag, success, stat, contents, pushKey) {
+            if (success) {
+                logger.info('/item/good success');
                 if(stat=='up'){
-                    res.json({"Result": "up"});
-                }else{
-                    res.json({"Result": "down"});
+                    sendPush.send(contents, pushKey);
                 }
-            }else{
-                if(flag==0){
+                res.json({"Result": stat});
+            } else {
+                if (flag == 0) {
                     logger.error('db_item.good pool.getConnection Error');
                     res.json({"Result": "getConnectionError"});
-                }else if(flag==1){
+                } else if (flag == 1) {
                     logger.error('db_item.good conn.query Error');
                     res.json({"Result": "connQueryError"});
-                }else if(flag==2){
+                } else if (flag == 2) {
                     logger.error('db_item.good Fail');
                     res.json({"Result": "Fail"});
                 }
@@ -207,7 +202,7 @@ router.post('/detail', function (req, res, next) {
                 logger.info('results', results);
                 var datas = results[0].concat(results[1]);
                 var data = merge(datas[0], datas[1]);
-                res.json({"Info":data, "ItemProp":results[2], "ItemCoordi":results[3]});
+                res.json({"Info": data, "ItemProp": results[2], "ItemCoordi": results[3]});
             } else {
                 logger.error('/item/detail fail');
                 res.json({"Result": "Fail"});
@@ -216,26 +211,28 @@ router.post('/detail', function (req, res, next) {
     }
 });
 
-router.post('/modify/info', function(req, res, next){
+router.post('/modify/info', function (req, res, next) {
     logger.info('req.body', req.body);
     var item_num = req.body.itemNum;
 
-    if(!item_num){
+    if (!item_num) {
         logger.info('itemNumNull');
-        res.json({"Result":"itemNumNull"});
-    }else{
-        db_item.modifyInfo(item_num, function(success, results){
-            if(success){
+        res.json({"Result": "itemNumNull"});
+    } else {
+        db_item.modifyInfo(item_num, function (success, results) {
+            if (success) {
                 logger.info('success, results', success, results);
-                if(results=='null'){
+                if (results == 'null') {
                     logger.info('/item/modify/info prop not exist');
-                    res.json({"Results":"none"});
-                }else{
+                    res.json({"Results": "none"});
+                } else {
                     logger.info('/item/modify/info prop exist');
-                    res.json({"Results":[results[0], results[1], results[2]]});
+                    var datas = results[0].concat(results[1]);
+                    res.json({"Results": datas});
                 }
-            }else{
-
+            } else {
+                logger.error('/item/modify/info fail');
+                res.json({"Result": "Fail"});
             }
         });
     }

@@ -1,12 +1,3 @@
-var express = require('express');
-var router = express.Router();
-var fs = require('fs');
+var sendPush = require('../sendPush');
 
-var url = "http://localhost/item/img/shirts1431321926548.png";
-var urlArr = url.split('/');
-
-console.log(urlArr[urlArr.length-1]);
-
-fs.unlink('../public/images/items/'+urlArr[urlArr.length-1], function(err){
-   if(err) throw err;
-});
+sendPush.send('내용','APA91bFvfYTF1W7aBOisnKobSyO3kRLCDVIMLt9p7WF4aAE1NOqZ5hd5MDSq9JwQpiDoF-pW57treAFoYb1I8syy685vUMbr7-6NaTX3dud4V6aIksReknztHJgR_dkzZWK2sh6mb9VES4Wz8oyqwewuIud8U93Gaw');

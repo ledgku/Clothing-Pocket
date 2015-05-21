@@ -61,8 +61,9 @@ exports.join = function (datas, done) {
     });
 };
 
-exports.fb = function (data, done) {
-    var access_token = data;
+exports.fb = function (datas, done) {
+    var access_token = datas[0];
+    var push_id = datas[1];
     var join_path = 1;
     logger.info('db_user fb access_token ', access_token);
     graph.setAccessToken(access_token);
@@ -131,8 +132,18 @@ exports.fb = function (data, done) {
                             done(0, false);
                         } else if (success) {
                             logger.info('db_user fb login data');
-                            conn.release();
-                            done(0, true, data);
+                            var sql = "update user set user.USER_LASTLOGIN=now(), user.USER_PUSHKEY=? where user.USER_NICKNAME=?";
+                            conn.query(sql, [push_id, data], function(err, row){
+                               if(err){
+                                   logger.error('db_user fb login error', err);
+                                   conn.release();
+                                   done(1, false);
+                               } else{
+                                   logger.info('db_user fb login success');
+                                   conn.release();
+                                   done(0, true, data);
+                               }
+                            });
                         } else {
                             logger.info('db_user fb fail data');
                             conn.release();
@@ -269,11 +280,11 @@ exports.login = function (datas, done) {
                 done(fail);
             } else {
                 if (nick) {
-                    var sql = "update user set user.USER_LASTLOGIN=now() where user.USER_NICKNAME=?";
-                    conn.query(sql, nick, function (err, row) {
+                    var sql = "update user set user.USER_LASTLOGIN=now(), user.USER_PUSHKEY=? where user.USER_NICKNAME=?";
+                    conn.query(sql, [datas[2], nick], function (err, row) {
                         if (err) {
-                            logger.error('db_user select err ', err);
-                            done(fail);
+                            logger.error('db_user update err ', err);
+                            done(false);
                         } else {
                             logger.info('/user/login nick', nick);
                             conn.release();

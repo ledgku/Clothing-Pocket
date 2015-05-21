@@ -94,7 +94,7 @@ exports.coordi = function (data, done) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=?";
+            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=? order by CD_REGDATE desc";
             conn.query(sql, data, function (err, rows) {
                 if (err) {
                     logger.error('db_closet coordi conn.query error', err);

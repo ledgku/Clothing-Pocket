@@ -103,7 +103,7 @@ app.use(function (err, req, res, next) {
     });
 });
 
-app.set('port', 80);
+app.set('port', 30003);
 var server = http.createServer(app);
 server.listen(app.get('port'));
 log.info('서버가 ' + app.get('port') + '번 포트에서 실행 중입니다. 주인님!!!');

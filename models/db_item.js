@@ -14,7 +14,7 @@ exports.add = function (datas, done) {
         if (err) {
             logger.error('getConnection error', err);
             done(0, false);
-        }else {
+        } else {
             var sql = "insert into item(USER_NICKNAME, ITEM_REGDATE, ITEM_URL) values(?, now(), ?)";
             conn.query(sql, datas, function (err, row) {
                 if (err) {
@@ -262,6 +262,7 @@ exports.delete = function (data, done) {
 
 exports.good = function (datas, done) {
     logger.info('datas', datas);
+    var contents = datas[1] + '님이 회원님의 아이템을 좋아합니다.';
 
     pool.getConnection(function (err, conn) {
         if (err) {
@@ -273,7 +274,7 @@ exports.good = function (datas, done) {
                     var sql = "select count(*) cnt from good_item where ITEM_NUM=? and USER_NICKNAME=?";
                     conn.query(sql, datas, function (err, row) {
                         if (err) {
-                            callback(err, 'db_item good conn.query error');
+                            callback(err);
                         } else {
                             callback(null, row[0].cnt);
                         }
@@ -284,9 +285,9 @@ exports.good = function (datas, done) {
                         var sql = "delete from good_item where ITEM_NUM=? and USER_NICKNAME=?";
                         conn.query(sql, datas, function (err, row) {
                             if (err) {
-                                callback(err, "good_itemDeleteError");
+                                callback(err);
                             } else {
-                                callback(null, true, 'down');
+                                callback(null, 'down');
                             }
                         });
                     } else {
@@ -294,24 +295,62 @@ exports.good = function (datas, done) {
                         var sql = "insert into good_item values(?,?)";
                         conn.query(sql, datas, function (err, row) {
                             if (err) {
-                                callback(err, "good_itemInsertError");
+                                callback(err);
                             } else {
-                                callback(null, true, 'up');
+                                callback(null, 'up');
                             }
                         });
                     }
+                }, function(stat, callback){
+                    var sql = "select ITEM_URL, USER_NICKNAME from item where ITEM_NUM=?";
+                    conn.query(sql, datas[0], function(err, row){
+                       if(err){
+                           callback(err);
+                       } else{
+                           var item_url = row[0].ITEM_URL;
+                           var user_nickname = row[0].USER_NICKNAME;
+                           if(!item_url || !user_nickname){
+                               callback(null, false);
+                           }else {
+                               var sql = "select USER_PROFILE_URL from user where USER_NICKNAME=?";
+                               conn.query(sql, user_nickname, function (err, row) {
+                                   if (err) {
+                                       callback(err);
+                                   } else {
+                                       var user_profile_url = row[0].USER_PROFILE_URL;
+                                       if(!user_profile_url){
+                                           callback(null, false);
+                                       }else {
+                                           var datas = [user_nickname, contents, item_url, user_profile_url];
+                                           var sql = "insert into alarm(ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, ALARM_REGDATE, IMG_URL, USER_PROFILE_URL) values(2,?,?,now(),?,?)";
+                                           conn.query(sql, datas, function(err, row){
+                                              if(err){
+                                                  callback(err);
+                                              } else{
+                                                  callback(null, true, stat, user_nickname);
+                                              }
+                                           });
+                                       }
+                                   }
+                               });
+                           }
+                       }
+                    });
                 }
-            ], function (err, success, stat) {
+            ], function (err, success, stat, nickname) {
                 if (success) {
-                    if(stat=='up'){
-                        logger.info("/item/good up");
-                        conn.release();
-                        done(0, true, 'up');
-                    }else if(stat=='down'){
-                        logger.info("/item/good down");
-                        conn.release();
-                        done(0, true, 'down');
-                    }
+                    logger.info("/item/good stat nickname", stat, nickname);
+
+                    var sql = "select USER_PUSHKEY from user where USER_NICKNAME=?";
+                    conn.query(sql, nickname, function(err, row){
+                        if(err){
+                            conn.release();
+                            done(1, false);
+                        }else{
+                            conn.release();
+                            done(0, true, stat, contents, row[0].USER_PUSHKEY);
+                        }
+                    });
                 } else {
                     logger.error('db_item good error');
                     conn.release();
@@ -401,20 +440,35 @@ exports.modifyInfo = function (data, done) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select item_prop.ITEM_PROP from item_prop where item_prop.ITEM_NUM=?";
-            conn.query(sql, data, function (err, row) {
+            async.series([
+                function (callback) {
+                    var sql = "select item_prop.ITEM_PROP from item_prop where item_prop.ITEM_NUM=?";
+                    conn.query(sql, data, function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null, row);
+                        }
+                    });
+                }, function (callback) {
+                    var sql = "select ITEM_DESCRIPTION from item where ITEM_NUM=?";
+                    conn.query(sql, data, function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null, row);
+                        }
+                    });
+                }
+            ], function (err, row) {
                 if (err) {
-                    logger.error('db_item modifyInfo conn.query error', err);
+                    logger.error('db_item modifyInfo error', err);
                     conn.release();
                     done(false);
                 } else {
-                    if (row.length == 0) {
-                        conn.release();
-                        done(true, 'null');
-                    } else {
-                        conn.release();
-                        done(true, row);
-                    }
+                    logger.info('db_item modifyInfo success');
+                    conn.release();
+                    done(true, row);
                 }
             });
         }

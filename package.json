@@ -21,6 +21,7 @@
     "moment": "^2.10.2",
     "morgan": "~1.5.1",
     "multer": "^0.1.8",
+    "node-gcm": "^0.9.15",
     "redis": "^0.12.1",
     "serve-favicon": "~2.2.0",
     "winston": "^1.0.0"

@@ -4,7 +4,8 @@ var fs = require('fs');
 var path = require('path');
 var logger = require('../logger');
 var multer = require('multer');
-var db_item = require('../models/db_admin.js');
+var db_admin = require('../models/db_admin.js');
+var sendPush = require('../sendPush');
 
 router.use(multer({
     dest: './public/images/items',
@@ -13,29 +14,28 @@ router.use(multer({
     }
 }));
 
-router.post('/item/add', function(req, res, next) {
+router.post('/item/add', function (req, res, next) {
     logger.info('req.files', req.files);
 
     var item = req.files;
     var filename = req.files.file.name;
-    var filePath = 'http://localhost/item/img/'+filename;
+    var filePath = 'http://52.68.143.198/item/img/' + filename;
+    var nickname = req.body.nickname;
+    var datas = [filePath, nickname];
 
     if (JSON.stringify(item) == '{}') {
         logger.info('modifiedItemUploadFileNull');
         res.json({"result": 'itemUploadFileNull'});
-    }else{
+    } else {
         logger.info('modifiedItemUploadOK');
-        db_item.add(filePath, function(flag, success){
-            if(success){
-                res.json({"Result":"ok"});
-            }else{
-                if(flag==0){
-                    logger.info('db_item.modiadd pool.getConnection Error');
-                    res.json({"Result": "getConnectionError"});
-                }else if(flag==1){
-                    logger.info('db_item.modiadd conn.query Error');
-                    res.json({"Result": "connQueryError"});
-                }
+        db_admin.add(datas, function (success, contents, pushKey) {
+            if (success) {
+                logger.info('/admin/add success');
+                sendPush.send(contents, pushKey);
+                res.json({"Result": "ok"});
+            } else {
+                logger.info('/admin/add fail');
+                res.json({"Result": "fail"});
             }
         });
     }

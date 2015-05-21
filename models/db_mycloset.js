@@ -94,7 +94,7 @@ exports.item = function (data, done) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select item.ITEM_NUM from item where item.ITEM_MODIFLAG=1 and item.USER_NICKNAME=?";
+            var sql = "select item.ITEM_NUM from item where item.ITEM_MODIFLAG=1 and item.USER_NICKNAME=? order by ITEM_REGDATE desc";
             conn.query(sql, data, function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset item conn.query error', err);
@@ -178,7 +178,7 @@ exports.coordi = function (data, done) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=?";
+            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=? order by CD_REGDATE desc";
             conn.query(sql, data, function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset coordi conn.query error', err);
@@ -810,7 +810,7 @@ exports.regRecentItemCoordis = function (datas, done) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.NUM, a.URL from (select ITEM_NUM as NUM, ITEM_URL as URL, ITEM_REGDATE as REGDATE from item where ITEM_MODIFLAG=1 and USER_NICKNAME=? union select CD_NUM as NUM, CD_URL as URL, CD_REGDATE as REGDATE from coordi where USER_NICKNAME=?) a order by a.REGDATE limit 7";
+            var sql = "select a.NUM, a.URL from (select ITEM_NUM as NUM, ITEM_URL as URL, ITEM_REGDATE as REGDATE from item where ITEM_MODIFLAG=1 and USER_NICKNAME=? union select CD_NUM as NUM, CD_URL as URL, CD_REGDATE as REGDATE from coordi where USER_NICKNAME=?) a order by a.REGDATE desc limit 7";
             conn.query(sql, datas, function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset regRecentItemCoordis conn.query error', err);

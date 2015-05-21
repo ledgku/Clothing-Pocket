@@ -85,12 +85,14 @@ router.post('/join', function (req, res, next) {
 router.post('/fb', function (req, res, next) {
     logger.info('req.body', req.body);
     var access_token = req.body.accessToken;
+    var push_id = req.body.pushId;
+    var datas = [access_token, push_id];
 
     if (!access_token) {
         logger.error('/user/fb accessTokenNull');
         res.json({"Result": "accessTokenNull"});
     } else {
-        db_user.fb(access_token, function (flag, success, data) {
+        db_user.fb(datas, function (flag, success, data) {
             if (success) {
                 logger.info('페이스북 로그인');
                 req.session.nickname = data;
@@ -101,7 +103,8 @@ router.post('/fb', function (req, res, next) {
                     res.json({"Result": "fail"});
                 } else {
                     logger.info('/user/fb ->fbjoin');
-                    req.session.datas = data;
+                    req.session.nickname = data;
+                    req.session.pushId = push_id;
                     res.json({"Result": "fbjoin"});
                     logger.info('data ', req.session.datas);
                 }
@@ -154,11 +157,14 @@ router.post('/login', function (req, res, next) {
     logger.info('req.body', req.body);
     var id = req.body.id;
     var passwd = req.body.passwd;
-    var datas = [id, passwd];
+    var push_id = req.body.pushId;
+    var datas = [id, passwd, push_id];
+
     db_user.login(datas, function (success, nickname) {
         if (success) {
             logger.info('/user/login success');
             req.session.nickname = nickname;
+            req.session.pushId = push_id;
             res.json({"Result": "ok"});
         } else {
             logger.info('/user/login fail');
