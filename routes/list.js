@@ -7,8 +7,10 @@ var db_list = require('../models/db_list.js');
 router.post('/closet/good', function(req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_list.listGood(nickname, function(success, coordis){
+    db_list.listGood(datas, function(success, coordis){
         if(success){
             if (success) {
                 logger.info('/closet/good success');
@@ -24,8 +26,10 @@ router.post('/closet/good', function(req, res, next) {
 router.post('/closet/recent', function(req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_list.listRecent(nickname, function(success, coordis){
+    db_list.listRecent(datas, function(success, coordis){
         if(success){
             if (success) {
                 logger.info('/closet/recent success');
@@ -41,8 +45,10 @@ router.post('/closet/recent', function(req, res, next) {
 router.post('/closet/follow', function(req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_list.listFollow(nickname, function(success, coordis){
+    db_list.listFollow(datas, function(success, coordis){
         if(success){
             if (success) {
                 logger.info('/closet/follow success');
@@ -59,8 +65,9 @@ router.post('/closet/good/search', function(req, res, next) {
     logger.info('req.session', req.session);
     logger.info('req.body', req.body);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.coordiProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_list.searchListPropGood(datas, function(success, coordis){
         if(success){
@@ -79,8 +86,9 @@ router.post('/closet/recent/search', function(req, res, next) {
     logger.info('req.session', req.session);
     logger.info('req.body', req.body);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.coordiProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_list.searchListPropRecent(datas, function(success, coordis){
         if(success){
@@ -99,8 +107,9 @@ router.post('/closet/follow/search', function(req, res, next) {
     logger.info('req.session', req.session);
     logger.info('req.body', req.body);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.coordiProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_list.searchListPropFollow(datas, function(success, coordis){
         if(success){

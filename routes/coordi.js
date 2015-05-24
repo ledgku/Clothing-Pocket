@@ -7,6 +7,7 @@ var multer = require('multer');
 var merge = require('merge');
 var db_coordi = require('../models/db_coordi.js');
 var sendPush = require('../sendPush');
+var easyimg = require('easyimage');
 
 router.get('/img/:IMG_NAME', function (req, res) {
     var imgName = req.params.IMG_NAME;
@@ -31,6 +32,7 @@ router.post('/add', function (req, res, next) {
     var filename = req.files.file.name;
     var filePath = 'http://52.68.143.198/coordi/img/' + filename;
     var nickname = req.session.nickname;
+    var imgPath = './public/images/coordi/';
     var datas = [nickname, filePath];
     logger.info('datas ', datas);
 
@@ -41,7 +43,19 @@ router.post('/add', function (req, res, next) {
         logger.info('coordiUploadOK');
         db_coordi.add(datas, function (flag, success) {
             if (success) {
-                res.json({"Result": "ok"});
+                easyimg.thumbnail({
+                    src:imgPath+filename , dst:imgPath+'thumb_'+filename,
+                    width:360, height:360
+                }).then(
+                    function(image) {
+                        logger.info('Coordi Thumbnail Created : ' + image.width + ' x ' + image.height);
+                        res.json({"Result": "ok"});
+                    },
+                    function (err) {
+                        logger.error(err);
+                        res.json({"Result":"fail"})
+                    }
+                );
             } else {
                 if (flag == 0) {
                     logger.info('db_coordi.add pool.getConnection Error');
@@ -176,6 +190,12 @@ router.post('/good', function (req, res, next) {
                 } else if (flag == 2) {
                     logger.error('db_coordi.good Fail');
                     res.json({"Result": "Fail"});
+                } else if (flag == 3){
+                    logger.error('db_coordi.good Rollback Error');
+                    res.json({"Result": "rollbackError"});
+                } else if (flag == 4){
+                    logger.error('db_coordi.good Rollback Complete');
+                    res.json({"Result": "rollback"});
                 }
             }
         });
@@ -313,13 +333,15 @@ router.post('/reply/del', function (req, res, next) {
 router.post('/prop/search', function (req, res, next) {
     logger.info('/reply req.body ', req.body);
 
-    var search_prop = req.body.searchProp;
+    var search_word = req.body.searchWord;
+    var page_num = req.body.pageNum;
+    var datas = [search_word, page_num];
 
-    if (!search_prop) {
-        logger.info('searchPropNull');
-        res.json({"Result": "searchPropNull"});
+    if (!search_word) {
+        logger.info('searchWordNull');
+        res.json({"Result": "searchWordNull"});
     } else {
-        db_coordi.propSearch(search_prop, function (success, coordis) {
+        db_coordi.propSearch(datas, function (success, coordis) {
             if (success) {
                 if (success) {
                     logger.info('/coordi/prop/search success');

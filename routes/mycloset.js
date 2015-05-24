@@ -27,11 +27,13 @@ router.post('/info', function (req, res, next) {
 router.post('/item', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_mycloset.item(nickname, function (success, results) {
+    db_mycloset.item(datas, function (success, items) {
         if (success) {
             logger.info('/mycloset/item success');
-            res.json({"myclosetItems": results});
+            res.json({"myclosetItems": items});
         } else {
             logger.info('/mycloset/item fail');
             res.json({"Result": "fail"});
@@ -43,11 +45,13 @@ router.post('/item', function (req, res, next) {
 router.post('/coordi', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_mycloset.coordi(nickname, function (success, results) {
+    db_mycloset.coordi(datas, function (success, coordis) {
         if (success) {
             logger.info('/mycloset/coordi success');
-            res.json({"myclosetCoordis": results});
+            res.json({"myclosetCoordis": coordis});
         } else {
             logger.info('/mycloset/coordi fail');
             res.json({"Result": "fail"});
@@ -58,8 +62,10 @@ router.post('/coordi', function (req, res, next) {
 router.post('/zzim/item', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_mycloset.zzimItem(nickname, function(success, items){
+    db_mycloset.zzimItem(datas, function(success, items){
         if(success){
             if (success) {
                 logger.info('/mycloset/zzim/item success');
@@ -75,8 +81,10 @@ router.post('/zzim/item', function (req, res, next) {
 router.post('/zzim/coordi', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_mycloset.zzimCoordi(nickname, function(success, Coordis){
+    db_mycloset.zzimCoordi(datas, function(success, Coordis){
         if(success){
             if (success) {
                 logger.info('/mycloset/zzim/coordi success');
@@ -92,8 +100,9 @@ router.post('/zzim/coordi', function (req, res, next) {
 router.post('/item/search', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.itemProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_mycloset.searchPropItem(datas, function(success, items){
         if(success){
@@ -111,8 +120,9 @@ router.post('/item/search', function (req, res, next) {
 router.post('/coordi/search', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.coordiProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_mycloset.searchPropCoordi(datas, function(success, coordis){
         if(success){
@@ -130,8 +140,9 @@ router.post('/coordi/search', function (req, res, next) {
 router.post('/pick/item/search', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.itemProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_mycloset.searchZzimPropItem(datas, function(success, items){
         if(success){
@@ -149,8 +160,9 @@ router.post('/pick/item/search', function (req, res, next) {
 router.post('/pick/coordi/search', function (req, res, next) {
     logger.info('req.session', req.session);
     var nickname = req.session.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.coordiProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_mycloset.searchZzimPropCoordi(datas, function(success, coordis){
         if(success){

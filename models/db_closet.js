@@ -86,16 +86,20 @@ exports.info = function (data, done) {
     });
 }
 
-exports.coordi = function (data, done) {
-    logger.info('db_closet coordi data ', data);
+exports.coordi = function (datas, done) {
+    logger.info('db_closet coordi datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=? order by CD_REGDATE desc";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=? order by CD_REGDATE desc limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_closet coordi conn.query error', err);
                     conn.release();
@@ -181,16 +185,20 @@ exports.coordi = function (data, done) {
     });
 }
 
-exports.pickCoordi = function (data, done) {
-    logger.info('db_closet pickCoordi data ', data);
+exports.pickCoordi = function (datas, done) {
+    logger.info('db_closet pickCoordi datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=?";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=? limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_closet pickCoordi conn.query error', err);
                     conn.release();
@@ -276,16 +284,20 @@ exports.pickCoordi = function (data, done) {
     });
 }
 
-exports.searchPropCoordi = function (data, done) {
-    logger.info('db_closet searchPropCoordi data ', data);
+exports.searchPropCoordi = function (datas, done) {
+    logger.info('db_closet searchPropCoordi datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_closet searchPropCoordi conn.query error', err);
                     conn.release();
@@ -371,16 +383,20 @@ exports.searchPropCoordi = function (data, done) {
     });
 }
 
-exports.searchPickPropCoordi = function (data, done) {
-    logger.info('db_closet searchPickPropCoordi data ', data);
+exports.searchPickPropCoordi = function (datas, done) {
+    logger.info('db_closet searchPickPropCoordi datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select a.CD_NUM from (select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_closet searchPickPropCoordi conn.query error', err);
                     conn.release();

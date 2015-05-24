@@ -7,16 +7,20 @@ var logger = require('../logger');
 var async = require('async');
 var merge = require('merge');
 
-exports.listGood = function (data, done) {
-    logger.info('db_list listGood data ', data);
+exports.listGood = function (datas, done) {
+    logger.info('db_list listGood data ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi where coordi.USER_NICKNAME<>?) a join good_coordi using(CD_NUM) group by CD_NUM order by count(*) desc";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi where coordi.USER_NICKNAME<>?) a join good_coordi using(CD_NUM) group by CD_NUM order by count(*) desc limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_list listGood conn.query error', err);
                     conn.release();
@@ -102,16 +106,20 @@ exports.listGood = function (data, done) {
     });
 }
 
-exports.listRecent = function (data, done) {
-    logger.info('db_list listRecent data ', data);
+exports.listRecent = function (datas, done) {
+    logger.info('db_list listRecent data ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select CD_NUM from coordi where USER_NICKNAME<>? order by CD_REGDATE desc";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select CD_NUM from coordi where USER_NICKNAME<>? order by CD_REGDATE desc limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_list listRecent conn.query error', err);
                     conn.release();
@@ -197,16 +205,20 @@ exports.listRecent = function (data, done) {
     });
 }
 
-exports.listFollow = function (data, done) {
-    logger.info('db_list listFollow data ', data);
+exports.listFollow = function (datas, done) {
+    logger.info('db_list listFollow datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select coordi.CD_NUM from coordi join (select USER_NICKNAME from follow where USER_NICKNAME2=?) a on coordi.USER_NICKNAME=a.USER_NICKNAME order by coordi.CD_REGDATE";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select coordi.CD_NUM from coordi join (select USER_NICKNAME from follow where USER_NICKNAME2=?) a on coordi.USER_NICKNAME=a.USER_NICKNAME order by coordi.CD_REGDATE limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_list listFollow conn.query error', err);
                     conn.release();
@@ -294,14 +306,18 @@ exports.listFollow = function (data, done) {
 
 exports.searchListPropGood = function (datas, done) {
     logger.info('db_list searchListPropGood datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select CD_NUM from coordi where USER_NICKNAME<>?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM";
-            conn.query(sql, datas, function (err, rows) {
+            var sql = "select a.CD_NUM from (select CD_NUM from coordi where USER_NICKNAME<>?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_list searchListPropGood conn.query error', err);
                     conn.release();
@@ -389,14 +405,18 @@ exports.searchListPropGood = function (datas, done) {
 
 exports.searchListPropRecent = function (datas, done) {
     logger.info('db_list searchListPropRecent datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select CD_NUM from coordi where USER_NICKNAME<>? order by CD_REGDATE) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM";
-            conn.query(sql, datas, function (err, rows) {
+            var sql = "select a.CD_NUM from (select CD_NUM from coordi where USER_NICKNAME<>? order by CD_REGDATE) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_list searchListPropRecent conn.query error', err);
                     conn.release();
@@ -484,14 +504,18 @@ exports.searchListPropRecent = function (datas, done) {
 
 exports.searchListPropFollow = function (datas, done) {
     logger.info('db_list searchListPropFollow datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi join (select USER_NICKNAME from follow where USER_NICKNAME2=?) c on coordi.USER_NICKNAME = c.USER_NICKNAME order by coordi.CD_REGDATE) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM";
-            conn.query(sql, datas, function (err, rows) {
+            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi join (select USER_NICKNAME from follow where USER_NICKNAME2=?) c on coordi.USER_NICKNAME = c.USER_NICKNAME order by coordi.CD_REGDATE) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_list searchListPropFollow conn.query error', err);
                     conn.release();

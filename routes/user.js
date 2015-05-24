@@ -5,6 +5,7 @@ var db_user = require('../models/db_user.js');
 var async = require('async');
 var multer = require('multer');
 var logger = require('../logger');
+var easyimg = require('easyimage');
 
 router.get('/img/:IMG_NAME', function (req, res) {
     var imgName = req.params.IMG_NAME;
@@ -55,36 +56,37 @@ router.post('/join', function (req, res, next) {
     var passwd = req.body.passwd;
     var nickname = req.body.nickname;
     var gender = req.body.gender;
-    var datas = [nickname, id, passwd, gender];
+    var push_id = req.body.pushId;
+    var datas = [nickname, id, passwd, gender, push_id];
 
     async.waterfall([
         function (callback) {
             if (!id) {
-                logger.error('/user/join idNull');
                 callback(null, 0);
             } else if (!passwd) {
-                logger.error('/user/join passwdNull');
                 callback(null, 1);
             } else if (!nickname) {
-                logger.error('/user/join nickNull');
                 callback(null, 2);
             } else if (!gender) {
-                logger.error('/user/join passwdNull');
                 callback(null, 3);
-            } else {
+            } else if(!push_id){
                 callback(null, 4);
+            } else{
+                callback(null, 'ok');
             }
-        }, function (errNum, callback) {
-            if (errNum == 0) {
+        }, function (errCode, callback) {
+            if (errCode == 0) {
                 callback(null, "idNull");
-            } else if (errNum == 1) {
+            } else if (errCode == 1) {
                 callback(null, "passwdNull");
-            } else if (errNum == 2) {
-                callback(null, "nickNull");
-            } else if (errNum == 3) {
+            } else if (errCode == 2) {
+                callback(null, "nicknameNull");
+            } else if (errCode == 3) {
                 callback(null, "genderNull");
-            } else if (errNum == 4) {
-                db_user.join(datas, function (flag, success) {
+            } else if (errCode == 4) {
+                callback(null, "pushIdNull");
+            } else {
+                db_user.join(datas, function (success, flag) {
                     if (success) {
                         callback(null, "ok");
                     } else {
@@ -95,12 +97,9 @@ router.post('/join', function (req, res, next) {
                         } else if (flag == 1) {
                             logger.error('회원가입 실패(닉네임 중복)');
                             callback(null, "nickDuplicated");
-                        } else if (flag == 2) {
+                        } else{
                             logger.error('회원가입 실패(커넥션 에러)');
                             callback(null, "connError");
-                        } else if (flag == 3) {
-                            logger.error('회원가입 실패(커넥션 쿼리 에러)');
-                            callback(null, "connQueryError");
                         }
                     }
                 });
@@ -138,10 +137,10 @@ router.post('/fb', function (req, res, next) {
                     res.json({"Result": "fail"});
                 } else {
                     logger.info('/user/fb ->fbjoin');
-                    req.session.nickname = data;
+                    req.session.datas = data;
                     req.session.pushId = push_id;
                     res.json({"Result": "fbjoin"});
-                    logger.info('data ', req.session.datas);
+                    logger.info('datas ', req.session.datas);
                 }
             }
         });
@@ -151,10 +150,10 @@ router.post('/fb', function (req, res, next) {
 //페이스북 회원가입
 router.post('/fbjoin', function (req, res, next) {
     var nickname = req.body.nickname;
+    logger.info('req.body.nickname', req.body.nickname);
     var datas = req.session.datas;
-    datas.push(nickname);
     logger.info('req.session.datas ', datas);
-    // datas = [facebook_id, join_path, gender, nickname];
+    datas.push(nickname);
 
     if (!nickname) {
         logger.error('/user/fbjoin nicknameNull');
@@ -266,13 +265,14 @@ router.post('/profile/add', function (req, res, next) {
 
 router.post('/search', function (req, res, next) {
     logger.info('req.body ', req.body.searchWord);
-    var word = req.body.searchWord + '%';
+    var word = req.body.searchWord;
 
     if (!word) {
         logger.error('/user/search searchWordNull');
         res.json({"Result": "searchWordNull"});
     } else {
-        db_user.userSearch(word, function (success, datas) {
+        var searchWord = '%' + req.body.searchWord + '%';
+        db_user.userSearch(searchWord, function (success, datas) {
             if (success) {
                 logger.info('/user/search success');
                 res.json({"searchUserList": datas});

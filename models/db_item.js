@@ -226,9 +226,11 @@ exports.delete = function (data, done) {
                         conn.rollback(function (err) {
                             if (err) {
                                 logger.error('rollback error');
+                                conn.release();
                                 done(1, false);
                             } else {
                                 logger.info('rollback complete');
+                                conn.release();
                                 done(2, false);
                             }
                         });
@@ -244,11 +246,7 @@ exports.delete = function (data, done) {
                                 var pathArr = imgPath[1].split('/');
                                 var fileName = pathArr[pathArr.length - 1];
                                 var filePath = "./public/images/items/" + fileName;
-                                logger.info(filePath);
-                                fs.unlink(filePath, function (err) {
-                                    logger.error('err', err);
-                                    done(3, false);
-                                });
+                                fs.unlinkSync(filePath);
                                 conn.release();
                                 done(0, true);
                             }
@@ -301,40 +299,40 @@ exports.good = function (datas, done) {
                             }
                         });
                     }
-                }, function(stat, callback){
+                }, function (stat, callback) {
                     var sql = "select ITEM_URL, USER_NICKNAME from item where ITEM_NUM=?";
-                    conn.query(sql, datas[0], function(err, row){
-                       if(err){
-                           callback(err);
-                       } else{
-                           var item_url = row[0].ITEM_URL;
-                           var user_nickname = row[0].USER_NICKNAME;
-                           if(!item_url || !user_nickname){
-                               callback(null, false);
-                           }else {
-                               var sql = "select USER_PROFILE_URL from user where USER_NICKNAME=?";
-                               conn.query(sql, user_nickname, function (err, row) {
-                                   if (err) {
-                                       callback(err);
-                                   } else {
-                                       var user_profile_url = row[0].USER_PROFILE_URL;
-                                       if(!user_profile_url){
-                                           callback(null, false);
-                                       }else {
-                                           var datas = [user_nickname, contents, item_url, user_profile_url];
-                                           var sql = "insert into alarm(ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, ALARM_REGDATE, IMG_URL, USER_PROFILE_URL) values(2,?,?,now(),?,?)";
-                                           conn.query(sql, datas, function(err, row){
-                                              if(err){
-                                                  callback(err);
-                                              } else{
-                                                  callback(null, true, stat, user_nickname);
-                                              }
-                                           });
-                                       }
-                                   }
-                               });
-                           }
-                       }
+                    conn.query(sql, datas[0], function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            var item_url = row[0].ITEM_URL;
+                            var user_nickname = row[0].USER_NICKNAME;
+                            if (!item_url || !user_nickname) {
+                                callback(null, false);
+                            } else {
+                                var sql = "select USER_PROFILE_URL from user where USER_NICKNAME=?";
+                                conn.query(sql, user_nickname, function (err, row) {
+                                    if (err) {
+                                        callback(err);
+                                    } else {
+                                        var user_profile_url = row[0].USER_PROFILE_URL;
+                                        if (!user_profile_url) {
+                                            callback(null, false);
+                                        } else {
+                                            var datas = [user_nickname, contents, item_url, user_profile_url];
+                                            var sql = "insert into alarm(ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, ALARM_REGDATE, IMG_URL, USER_PROFILE_URL) values(2,?,?,now(),?,?)";
+                                            conn.query(sql, datas, function (err, row) {
+                                                if (err) {
+                                                    callback(err);
+                                                } else {
+                                                    callback(null, true, stat, user_nickname);
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        }
                     });
                 }
             ], function (err, success, stat, nickname) {
@@ -342,11 +340,11 @@ exports.good = function (datas, done) {
                     logger.info("/item/good stat nickname", stat, nickname);
 
                     var sql = "select USER_PUSHKEY, USER_ALARM_FLAG from user where USER_NICKNAME=?";
-                    conn.query(sql, nickname, function(err, row){
-                        if(err){
+                    conn.query(sql, nickname, function (err, row) {
+                        if (err) {
                             conn.release();
                             done(1, false);
-                        }else{
+                        } else {
                             conn.release();
                             done(0, true, stat, row[0].USER_ALARM_FLAG, contents, row[0].USER_PUSHKEY);
                         }

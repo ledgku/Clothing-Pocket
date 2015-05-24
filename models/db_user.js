@@ -6,58 +6,89 @@ var pool = mysql.createPool(db_config);
 var graph = require('fbgraph');
 var logger = require('../logger');
 var async = require('async');
+var crypto = require('crypto');
 
 //일반 회원 가입, USER_JOINPATH(0)
 exports.join = function (datas, done) {
+    logger.info('db_user join datas ', datas);
+
     pool.getConnection(function (err, conn) {
-        if (err) done(2, false);
+        if (err) {
+            done(false);
+        } else {
+            var nickname = datas[0];
+            var id = datas[1];
+            var passwd = datas[2];
 
-        var nickname = datas[0];
-        var id = datas[1];
-        var sql = "select count(*) cnt from user where USER_NICKNAME=?";
-
-        //닉네임 중복 체크
-        conn.query(sql, nickname, function (err, row) {
-            if (err) {
-                conn.release();
-                done(3, false);
-            }
-            logger.info(row);
-            if (row[0].cnt != 0) {
-                conn.release();
-                done(1, false);
-            } else {
-                //아이디 중복 체크
-                var sql = "select count(*) cnt from user where USER_ID=?";
-                conn.query(sql, id, function (err, row) {
-                    if (err) {
-                        conn.release();
-                        done(2, false);
-                    }
-                    logger.info(row);
-                    if (row[0].cnt != 0) {
-                        conn.release();
-                        done(0, false);
-                    } else {
-                        //회원 가입
-                        var sql = "insert into user(USER_NICKNAME, USER_JOINPATH, USER_ID, USER_PASSWORD, USER_JOINDATE, USER_LASTLOGIN, USER_GENDER) values(?,0,?,?,now(),now(),?)";
-                        conn.query(sql, datas, function (err, row) {
-                            if (err) {
+            async.waterfall([
+                function (callback) {
+                    var sql = "select count(*) cnt from user where USER_NICKNAME=?";
+                    //닉네임 중복 체크
+                    conn.query(sql, nickname, function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            if (row[0].cnt != 0) {
                                 conn.release();
-                                done(3, false);
+                                done(false, 1);
+                            } else {
+                                callback(null, true);
                             }
-                            logger.info('row', row);
-                            var success = false;
-                            if (row.affectedRows == 1) {
-                                success = true;
+                        }
+                    });
+                }, function (success, callback) {
+                    if (success) {
+                        var sql = "select count(*) cnt from user where USER_ID=?";
+                        //아이디 중복 체크
+                        conn.query(sql, id, function (err, row) {
+                            if (row[0].cnt != 0) {
+                                conn.release();
+                                done(false, 0);
+                            } else {
+                                callback(null, true);
                             }
-                            conn.release();
-                            done(0, success);
                         });
+                    } else {
+                        callback(null, false, 0);
                     }
-                });
-            }
-        });
+                }, function (success, callback) {
+                    if (success) {
+                        var salt = "" + Math.round(new Date().valueOf() * Math.random());
+                        var derivedKey = crypto.pbkdf2Sync(passwd, salt, 1024, 24);
+                        var pw = Buffer(derivedKey, 'binary').toString('hex');
+
+                        var sql = "insert into user(USER_NICKNAME, USER_JOINPATH, USER_ID, USER_PASSWORD, USER_JOINDATE, USER_LASTLOGIN, USER_GENDER, USER_PUSHKEY, USER_PASSWORD_SALT) values(?,0,?,?,now(),now(),?,?,?)";
+
+                        //회원 가입
+                        conn.query(sql, [nickname, id, pw, datas[3], datas[4], salt], function (err, row) {
+                            if (err) {
+                                callback(err);
+                            } else {
+                                callback(null, true);
+                            }
+                        });
+                    } else {
+                        callback(null, false);
+                    }
+                }
+            ], function (err, success) {
+                if (err) {
+                    logger.error('db_user join error', error);
+                    conn.release();
+                    done(false, 2);
+                } else {
+                    if (success) {
+                        logger.info('db_user join success');
+                        conn.release();
+                        done(true, 0);
+                    } else {
+                        logger.info('db_uesr join fail');
+                        conn.release();
+                        done(false, 2);
+                    }
+                }
+            });
+        }
     });
 };
 
@@ -145,7 +176,7 @@ exports.fb = function (datas, done) {
                                 }
                             });
                         } else {
-                            logger.info('db_user fb fail data');
+                            logger.info('db_user fb fail data', data);
                             conn.release();
                             done(1, false, data);
                         }
@@ -238,17 +269,33 @@ exports.fbjoin = function (datas, done) {
 
 exports.login = function (datas, done) {
     logger.info('db_user datas ', datas);
+    var id = datas[0];
+    var passwd = datas[1];
 
     pool.getConnection(function (err, conn) {
         async.waterfall([
             function (callback) {
-                var sql = "select count(*) cnt from user where USER_ID=? and USER_PASSWORD=?";
-                conn.query(sql, datas, function (err, row) {
+                var sql = "select USER_PASSWORD_SALT from user where USER_ID=?";
+                conn.query(sql, id, function (err, row) {
                     if (err) {
-                        logger.error('db_user select err ', err);
                         callback(err);
                     } else {
-                        logger.info('db_user select success row ', row);
+                        if (row[0]) {
+                            var derivedKey = crypto.pbkdf2Sync(passwd, row[0].USER_PASSWORD_SALT, 1024, 24);
+                            var pw = Buffer(derivedKey, 'binary').toString('hex');
+                            callback(null, pw);
+                        } else {
+                            callback(null, false);
+                        }
+                    }
+                });
+            },
+            function (pw, callback) {
+                var sql = "select count(*) cnt from user where USER_ID=? and USER_PASSWORD=?";
+                conn.query(sql, [id, pw], function (err, row) {
+                    if (err) {
+                        callback(err);
+                    } else {
                         if (row[0].cnt == 1) {
                             callback(null, true);
                         } else {
@@ -261,10 +308,8 @@ exports.login = function (datas, done) {
                     var sql = "select user.USER_NICKNAME from user where user.USER_ID=?";
                     conn.query(sql, datas[0], function (err, row) {
                         if (err) {
-                            logger.error('db_user select err ', err);
                             callback(err);
                         } else {
-                            logger.info('/user/login user.USER_NICKNAME ', row[0].USER_NICKNAME);
                             callback(null, true, row[0].USER_NICKNAME);
                         }
                     });
@@ -384,7 +429,7 @@ exports.userSearch = function (data, done) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select USER_NICKNAME from user where USER_NICKNAME like ?";
+            var sql = "select a.USER_NICKNAME from (select USER_NICKNAME from user where USER_NICKNAME like ?) a join (select USER_NICKNAME from follow group by USER_NICKNAME order by count(*) desc) b on a.USER_NICKNAME = b.USER_NICKNAME";
             conn.query(sql, data, function (err, rows) {
                 if (err) {
                     logger.error('db_user userSearch conn.query error', err);
@@ -469,31 +514,31 @@ exports.alarm = function (nickname, done) {
                     conn.release();
                     done(false);
                 } else {
-                    if (rows.length==0) {
+                    if (rows.length == 0) {
                         logger.info('db_user alarm null');
                         conn.release();
                         done(true, 'null');
                     } else {
                         logger.info('db_user alarm success', rows.length);
                         var alarms = [];
-                        async.eachSeries(rows, function(row, callback){
+                        async.eachSeries(rows, function (row, callback) {
                             var alarm_num = row.ALARM_NUM;
                             logger.info('alarm_num', alarm_num);
                             var sql = "select ALARM_NUM, ALARM_FLAG, USER_NICKNAME, ALARM_CONTENTS, IMG_URL, USER_PROFILE_URL from alarm where ALARM_NUM=?";
-                            conn.query(sql, alarm_num, function(err, rows){
-                                if(err){
+                            conn.query(sql, alarm_num, function (err, rows) {
+                                if (err) {
                                     callback(err);
-                                }else{
+                                } else {
                                     alarms.push(rows);
                                     callback(null);
                                 }
                             });
-                        }, function(err){
-                            if(err){
+                        }, function (err) {
+                            if (err) {
                                 logger.error('db_user alarm error', err);
                                 conn.release();
                                 done(false);
-                            }else{
+                            } else {
                                 logger.info('db_user alarm success');
                                 conn.release();
                                 done(true, alarms);
@@ -515,12 +560,12 @@ exports.alarmDel = function (datas, done) {
             done(false);
         } else {
             var sql = "delete from alarm where USER_NICKNAME=? and ALARM_NUM=?";
-            conn.query(sql, datas, function(err, row){
-                if(err){
+            conn.query(sql, datas, function (err, row) {
+                if (err) {
                     logger.error('db_user alarmDel error', err);
                     conn.release();
                     done(false);
-                }else{
+                } else {
                     logger.info('db_user alarmDel success');
                     conn.release();
                     done(true);
@@ -539,12 +584,12 @@ exports.alarmDelAll = function (nickname, done) {
             done(false);
         } else {
             var sql = "delete from alarm where USER_NICKNAME=?";
-            conn.query(sql, nickname, function(err, row){
-                if(err){
+            conn.query(sql, nickname, function (err, row) {
+                if (err) {
                     logger.error('db_user alarmDelAll error', err);
                     conn.release();
                     done(false);
-                }else{
+                } else {
                     logger.info('db_user alarmDelAll success');
                     conn.release();
                     done(true);
@@ -563,37 +608,37 @@ exports.personalAlarmSubmit = function (nickname, done) {
             done(false);
         } else {
             async.waterfall([
-                function(callback){
+                function (callback) {
                     var sql = "select USER_ALARM_FLAG from user where USER_NICKNAME=?";
-                    conn.query(sql, nickname, function(err, row){
-                       if(err){
-                           callback(err);
-                       } else{
-                           callback(null, row[0].USER_ALARM_FLAG);
-                       }
+                    conn.query(sql, nickname, function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null, row[0].USER_ALARM_FLAG);
+                        }
                     });
-                }, function(flag, callback){
-                    if(flag==1){
+                }, function (flag, callback) {
+                    if (flag == 1) {
                         callback(null, 0);
-                    }else{
+                    } else {
                         callback(null, 1);
                     }
-                }, function(flag, callback){
+                }, function (flag, callback) {
                     var sql = "update user set USER_ALARM_FLAG=? where USER_NICKNAME=?";
-                    conn.query(sql, [flag, nickname], function(err, row){
-                       if(err){
-                           callback(err);
-                       } else{
-                           callback(null);
-                       }
+                    conn.query(sql, [flag, nickname], function (err, row) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null);
+                        }
                     });
                 }
-            ],function(err){
-                if(err){
+            ], function (err) {
+                if (err) {
                     logger.error('db_user personalAlarmSubmit error', err);
                     conn.release();
                     done(false);
-                }else{
+                } else {
                     logger.info('db_user personalAlarmSubmit success');
                     conn.release();
                     done(true);
@@ -611,16 +656,16 @@ exports.profileUpdate = function (datas, done) {
             done(0, false);
         } else {
             var sql = "update user set USER_PROFILE_URL=? where USER_NICKNAME=?";
-            conn.query(sql, datas, function(err, row){
-               if(err){
-                   logger.error('db_user profileUpdate error', err);
-                   conn.release();
-                   done(false);
-               } else{
-                   logger.info('db_user profileUpdate success');
-                   conn.release();
-                   done(true);
-               }
+            conn.query(sql, datas, function (err, row) {
+                if (err) {
+                    logger.error('db_user profileUpdate error', err);
+                    conn.release();
+                    done(false);
+                } else {
+                    logger.info('db_user profileUpdate success');
+                    conn.release();
+                    done(true);
+                }
             });
         }
     });

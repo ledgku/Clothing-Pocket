@@ -27,8 +27,10 @@ router.post('/info', function(req, res, next) {
 router.post('/coordi', function(req, res, next) {
     logger.info('req.body', req.body);
     var nickname = req.body.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_closet.coordi(nickname, function (success, results) {
+    db_closet.coordi(datas, function (success, results) {
         if (success) {
             logger.info('/closet/coordi success');
             res.json({"closetCoordis": results});
@@ -42,8 +44,10 @@ router.post('/coordi', function(req, res, next) {
 router.post('/pick/coordi', function(req, res, next) {
     logger.info('req.body', req.body);
     var nickname = req.body.nickname;
+    var page_num = req.body.pageNum;
+    var datas = [nickname, page_num];
 
-    db_closet.pickCoordi(nickname, function(success, Coordis){
+    db_closet.pickCoordi(datas, function(success, Coordis){
         if(success){
             if (success) {
                 logger.info('/mycloset/pick/coordi success');
@@ -59,8 +63,9 @@ router.post('/pick/coordi', function(req, res, next) {
 router.post('/coordi/search', function(req, res, next) {
     logger.info('req.body', req.body);
     var nickname = req.body.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.coordiProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_closet.searchPropCoordi(datas, function(success, coordis){
         if(success){
@@ -78,8 +83,9 @@ router.post('/coordi/search', function(req, res, next) {
 router.post('/pick/coordi/search', function(req, res, next) {
     logger.info('req.body', req.body);
     var nickname = req.body.nickname;
+    var page_num = req.body.pageNum;
     var prop = req.body.coordiProp;
-    var datas = [nickname, prop];
+    var datas = [nickname, page_num, prop];
 
     db_closet.searchPickPropCoordi(datas, function(success, coordis){
         if(success){

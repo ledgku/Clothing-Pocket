@@ -86,16 +86,21 @@ exports.info = function (data, done) {
     });
 }
 
-exports.item = function (data, done) {
-    logger.info('db_mycloset item data ', data);
+exports.item = function (datas, done) {
+    logger.info('db_mycloset item data ', datas);
+
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select item.ITEM_NUM from item where item.ITEM_MODIFLAG=1 and item.USER_NICKNAME=? order by ITEM_REGDATE desc";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select item.ITEM_NUM from item where item.ITEM_MODIFLAG=1 and item.USER_NICKNAME=? order by ITEM_REGDATE desc limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset item conn.query error', err);
                     conn.release();
@@ -170,16 +175,20 @@ exports.item = function (data, done) {
     });
 }
 
-exports.coordi = function (data, done) {
-    logger.info('db_mycloset coordi data ', data);
+exports.coordi = function (datas, done) {
+    logger.info('db_mycloset coordi datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=? order by CD_REGDATE desc";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=? order by CD_REGDATE desc limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset coordi conn.query error', err);
                     conn.release();
@@ -265,16 +274,20 @@ exports.coordi = function (data, done) {
     });
 }
 
-exports.zzimItem = function (data, done) {
-    logger.info('db_mycloset zzimItem data ', data);
+exports.zzimItem = function (datas, done) {
+    logger.info('db_mycloset zzimItem datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select good_item.ITEM_NUM from good_item where good_item.USER_NICKNAME=?";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select good_item.ITEM_NUM from good_item where good_item.USER_NICKNAME=? limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset item conn.query error', err);
                     conn.release();
@@ -349,16 +362,20 @@ exports.zzimItem = function (data, done) {
     });
 }
 
-exports.zzimCoordi = function (data, done) {
-    logger.info('db_mycloset zzimCoordi data ', data);
+exports.zzimCoordi = function (datas, done) {
+    logger.info('db_mycloset zzimCoordi datas ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=?";
-            conn.query(sql, data, function (err, rows) {
+            var sql = "select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=? limit ?, ?";
+            conn.query(sql, [nickname, startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset zzimCoordi conn.query error', err);
                     conn.release();
@@ -446,14 +463,18 @@ exports.zzimCoordi = function (data, done) {
 
 exports.searchPropItem = function (datas, done) {
     logger.info('db_mycloset searchPropItem data ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.ITEM_NUM from (select item.ITEM_NUM from item where item.USER_NICKNAME=?) a join (select item_prop.ITEM_NUM from item_prop join item_prop_code on item_prop.ITEM_PROP = item_prop_code.ITEM_PROP where item_prop_code.ITEM_PROP_CONTENT=?) b on a.ITEM_NUM = b.ITEM_NUM";
-            conn.query(sql, datas, function (err, rows) {
+            var sql = "select a.ITEM_NUM from (select item.ITEM_NUM from item where item.USER_NICKNAME=?) a join (select item_prop.ITEM_NUM from item_prop join item_prop_code on item_prop.ITEM_PROP = item_prop_code.ITEM_PROP where item_prop_code.ITEM_PROP_CONTENT=?) b on a.ITEM_NUM = b.ITEM_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset searchPropItem conn.query error', err);
                     conn.release();
@@ -530,14 +551,18 @@ exports.searchPropItem = function (datas, done) {
 
 exports.searchPropCoordi = function (datas, done) {
     logger.info('db_mycloset searchPropCoordi data ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM";
-            conn.query(sql, datas, function (err, rows) {
+            var sql = "select a.CD_NUM from (select coordi.CD_NUM from coordi where coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset searchPropCoordi conn.query error', err);
                     conn.release();
@@ -625,14 +650,18 @@ exports.searchPropCoordi = function (datas, done) {
 
 exports.searchZzimPropItem = function (datas, done) {
     logger.info('db_mycloset searchZzimPropItem data ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.ITEM_NUM from (select good_item.ITEM_NUM from good_item where good_item.USER_NICKNAME=?) a join (select item_prop.ITEM_NUM from item_prop join item_prop_code on item_prop.ITEM_PROP = item_prop_code.ITEM_PROP where item_prop_code.ITEM_PROP_CONTENT=?) b on a.ITEM_NUM = b.ITEM_NUM";
-            conn.query(sql, datas, function (err, rows) {
+            var sql = "select a.ITEM_NUM from (select good_item.ITEM_NUM from good_item where good_item.USER_NICKNAME=?) a join (select item_prop.ITEM_NUM from item_prop join item_prop_code on item_prop.ITEM_PROP = item_prop_code.ITEM_PROP where item_prop_code.ITEM_PROP_CONTENT=?) b on a.ITEM_NUM = b.ITEM_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset searchZzimPropItem conn.query error', err);
                     conn.release();
@@ -709,14 +738,18 @@ exports.searchZzimPropItem = function (datas, done) {
 
 exports.searchZzimPropCoordi = function (datas, done) {
     logger.info('db_mycloset searchZzimPropCoordi data ', datas);
+    var nickname = datas[0];
+    var pageNum = datas[1];
+    var size = 8;
+    var startNum = (pageNum-1)*size;
 
     pool.getConnection(function (err, conn) {
         if (err) {
             logger.error('getConnection error', err);
             done(false);
         } else {
-            var sql = "select a.CD_NUM from (select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM";
-            conn.query(sql, datas, function (err, rows) {
+            var sql = "select a.CD_NUM from (select good_coordi.CD_NUM from good_coordi where good_coordi.USER_NICKNAME=?) a join (select coordi_prop.CD_NUM from coordi_prop join coordi_prop_code on coordi_prop.COORDI_PROP = coordi_prop_code.COORDI_PROP where coordi_prop_code.COORDI_PROP_CONTENT=?) b on a.CD_NUM = b.CD_NUM limit ?, ?";
+            conn.query(sql, [nickname, datas[2], startNum, size], function (err, rows) {
                 if (err) {
                     logger.error('db_mycloset searchZzimPropCoordi conn.query error', err);
                     conn.release();

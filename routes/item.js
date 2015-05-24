@@ -145,6 +145,9 @@ router.post('/delete', function (req, res, next) {
                 } else if (flag == 3) {
                     logger.error('db_item.delete unlink error');
                     res.json({"Result": "unlinkError"});
+                }else{
+                    logger.error('db_item.delete item_num not exist');
+                    res.json({"Result":"itemNumNotExist"});
                 }
             }
         })
