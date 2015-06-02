@@ -45,7 +45,7 @@ app.use(session({
         port: 6739,
         ttl: 60*60,
         client: client
-    })
+    });
 }));
 
 // uncomment after placing your favicon in /public
